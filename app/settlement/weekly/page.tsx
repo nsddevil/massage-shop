@@ -1,0 +1,26 @@
+import { Sidebar } from "@/components/dashboard/sidebar";
+import { WeeklySettlementClient } from "./WeeklySettlementClient";
+import { getWeeklySettlementData } from "@/app/actions/settlement";
+import { startOfWeek, endOfWeek } from "date-fns";
+
+export default async function WeeklySettlementPage() {
+  const now = new Date();
+  // 월요일~일요일 범위
+  const start = startOfWeek(now, { weekStartsOn: 1 });
+  const end = endOfWeek(now, { weekStartsOn: 1 });
+
+  const settlementRes = await getWeeklySettlementData(start, end);
+
+  return (
+    <div className="flex h-screen bg-zinc-50 dark:bg-black overflow-hidden font-sans">
+      {/* Sidebar - Desktop Only */}
+      <aside className="hidden lg:block w-72 shrink-0 h-full">
+        <Sidebar />
+      </aside>
+
+      <WeeklySettlementClient
+        initialData={settlementRes.success ? settlementRes.data || [] : []}
+      />
+    </div>
+  );
+}

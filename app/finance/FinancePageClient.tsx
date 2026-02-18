@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/dashboard/header";
 import {
   CircleDollarSign,
@@ -40,9 +40,14 @@ export function FinancePageClient({
 }: {
   initialData: FinanceData;
 }) {
+  const [mounted, setMounted] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [data, setData] = useState<FinanceData>(initialData);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchFinanceData = async (date: Date) => {
     setIsLoading(true);
@@ -106,7 +111,7 @@ export function FinancePageClient({
                 variant="ghost"
                 size="icon"
                 onClick={handleNextMonth}
-                disabled={currentDate >= new Date()}
+                disabled={!mounted || currentDate >= new Date()}
                 className="size-9 rounded-xl text-zinc-500"
               >
                 <ChevronRight className="size-5" />
