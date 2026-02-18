@@ -1,0 +1,167 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// 1. 직원 관리
+enum Role {
+  OWNER // 사장
+  MANAGER // 실장
+  THERAPIST // 관리사
+  STAFF // 직원 (시급제)
+}
+
+model Employee {
+  id         String    @id @default(cuid()) // String + cuid 적용
+  name       String
+  phone      String?
+  role       Role
+  joinedAt   DateTime
+  resignedAt DateTime?
+
+  baseSalary    Int? @default(0)
+  hourlyRate    Int? @default(0)
+  mealAllowance Int? @default(0)
+
+  attendances   Attendance[]
+  extraPayments ExtraPayment[]
+  salesAssigned SaleTherapist[]
+  settlements   Settlement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 2. 출퇴근 관리
+model Attendance {
+  id         String    @id @default(cuid())
+  employeeId String // Employee.id의 타입을 따라 String으로 변경
+  employee   Employee  @relation(fields: [employeeId], references: [id])
+  date       DateTime  @db.Date
+  clockIn    DateTime
+  clockOut   DateTime?
+  workHours  Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 3. 가불금 및 보너스 관리
+enum ExtraType {
+  ADVANCE
+  BONUS
+}
+
+model ExtraPayment {
+  id         String    @id @default(cuid())
+  employeeId String
+  employee   Employee  @relation(fields: [employeeId], references: [id])
+  type       ExtraType
+  amount     Int
+  date       DateTime  @db.Date
+  isSettled  Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 4. 코스 관리
+enum CourseType {
+  SINGLE
+  DOUBLE
+}
+
+model Course {
+  id       String     @id @default(cuid())
+  name     String
+  type     CourseType
+  duration Int
+  price    Int
+  sales    Sale[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 5. 매출 관리
+enum PayMethod {
+  CASH
+  TRANSFER
+  CARD
+  HEELY
+  MATONG
+}
+
+model Sale {
+  id         String    @id @default(cuid())
+  courseId   String
+  course     Course    @relation(fields: [courseId], references: [id])
+  payMethod  PayMethod
+  totalPrice Int
+
+  therapists SaleTherapist[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 6. 관리사별 커미션 기록
+model SaleTherapist {
+  id         String   @id @default(cuid())
+  saleId     String
+  sale       Sale     @relation(fields: [saleId], references: [id])
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  isChoice         Boolean @default(false)
+  commissionAmount Int
+  choiceFee        Int     @default(0)
+
+  createdAt DateTime @default(now())
+}
+
+// 7. 지출 관리
+enum ExpenseType {
+  FIXED
+  GENERAL
+}
+
+model Expense {
+  id       String      @id @default(cuid())
+  type     ExpenseType
+  category String
+  amount   Int
+  date     DateTime    @db.Date
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 8. 정산 기록
+model Settlement {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  type        String
+  periodStart DateTime
+  periodEnd   DateTime
+
+  totalDaysInPeriod Int?
+  workedDays        Int?
+
+  totalAmount Int
+  details     Json
+
+  createdAt DateTime @default(now())
+}
