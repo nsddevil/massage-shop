@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Form,
   FormControl,
@@ -120,7 +121,7 @@ export function StaffEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden border-none shadow-2xl">
+      <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden border-none shadow-2xl max-h-[90vh] flex flex-col [&>button]:text-zinc-500 dark:[&>button]:text-white">
         <DialogHeader className="p-6 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-800">
           <DialogTitle className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
             <Edit2 className="size-5 text-blue-600" />
@@ -130,215 +131,217 @@ export function StaffEditDialog({
             직원의 기본 정보와 급여 조건을 수정합니다.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="p-6 space-y-5"
-          >
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
-                    이름
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="이름을 입력하세요"
-                      {...field}
-                      className="h-11 bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
-                    전화번호
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="010-0000-0000"
-                      {...field}
-                      className="h-11 bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-2 gap-4">
+        <ScrollArea className="flex-1 overflow-y-auto">
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="p-6 space-y-5"
+            >
               <FormField
                 control={form.control}
-                name="role"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
-                      역할
+                      이름
                     </FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="h-11 bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
-                          <SelectValue placeholder="선택" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {Object.entries(ROLE_LABELS).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Input
+                        placeholder="이름을 입력하세요"
+                        {...field}
+                        className="h-11 bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
-                name="joinedAt"
+                name="phone"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col mt-2">
-                    <FormLabel className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
-                      입사일
+                  <FormItem>
+                    <FormLabel className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                      전화번호
                     </FormLabel>
-                    <Popover
-                      open={isCalendarOpen}
-                      onOpenChange={setIsCalendarOpen}
-                    >
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "h-11 pl-3 text-left font-normal bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700",
-                              !field.value && "text-muted-foreground",
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP", { locale: ko })
-                            ) : (
-                              <span>입사일 선택</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={(date) => {
-                            field.onChange(date);
-                            setIsCalendarOpen(false);
-                          }}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                          locale={ko}
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <FormControl>
+                      <Input
+                        placeholder="010-0000-0000"
+                        {...field}
+                        className="h-11 bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
-
-            <div className="space-y-4 pt-2">
-              <div className="text-xs font-bold text-blue-600 uppercase tracking-wider border-b border-blue-100 pb-1">
-                급여 조건
-              </div>
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="baseSalary"
+                  name="role"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xs font-bold text-zinc-500">
-                        월 고정 기본급
+                      <FormLabel className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                        역할
                       </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          {...field}
-                          className="h-11 bg-zinc-50 dark:bg-zinc-800"
-                        />
-                      </FormControl>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-11 bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
+                            <SelectValue placeholder="선택" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 <FormField
                   control={form.control}
-                  name="hourlyRate"
+                  name="joinedAt"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-bold text-zinc-500">
-                        시간당 급여
+                    <FormItem className="flex flex-col mt-2">
+                      <FormLabel className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
+                        입사일
                       </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          {...field}
-                          className="h-11 bg-zinc-50 dark:bg-zinc-800"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="mealAllowance"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-bold text-zinc-500">
-                        일일 식대
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          {...field}
-                          className="h-11 bg-zinc-50 dark:bg-zinc-800"
-                        />
-                      </FormControl>
+                      <Popover
+                        open={isCalendarOpen}
+                        onOpenChange={setIsCalendarOpen}
+                      >
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "h-11 pl-3 text-left font-normal bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700",
+                                !field.value && "text-muted-foreground",
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP", { locale: ko })
+                              ) : (
+                                <span>입사일 선택</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={(date) => {
+                              field.onChange(date);
+                              setIsCalendarOpen(false);
+                            }}
+                            disabled={(date) =>
+                              date > new Date() || date < new Date("1900-01-01")
+                            }
+                            initialFocus
+                            locale={ko}
+                          />
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-            </div>
 
-            <DialogFooter className="pt-4">
-              <Button
-                type="submit"
-                disabled={isPending}
-                className="w-full h-12 bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white font-bold rounded-xl"
-              >
-                {isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    수정 중...
-                  </>
-                ) : (
-                  "수정 완료"
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+              <div className="space-y-4 pt-2">
+                <div className="text-xs font-bold text-blue-600 uppercase tracking-wider border-b border-blue-100 pb-1">
+                  급여 조건
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="baseSalary"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-bold text-zinc-500">
+                          월 고정 기본급
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            {...field}
+                            className="h-11 bg-zinc-50 dark:bg-zinc-800"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="hourlyRate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-bold text-zinc-500">
+                          시간당 급여
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            {...field}
+                            className="h-11 bg-zinc-50 dark:bg-zinc-800"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="mealAllowance"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-bold text-zinc-500">
+                          일일 식대
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            {...field}
+                            className="h-11 bg-zinc-50 dark:bg-zinc-800"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <DialogFooter className="pt-4">
+                <Button
+                  type="submit"
+                  disabled={isPending}
+                  className="w-full h-12 bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white font-bold rounded-xl"
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      수정 중...
+                    </>
+                  ) : (
+                    "수정 완료"
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

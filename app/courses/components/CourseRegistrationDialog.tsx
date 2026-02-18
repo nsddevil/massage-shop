@@ -81,7 +81,7 @@ export function CourseRegistrationDialog() {
           신규 코스 등록
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden border-none rounded-3xl outline-none">
+      <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden border-none rounded-3xl outline-none [&>button]:text-white">
         <DialogHeader className="p-8 bg-zinc-900 dark:bg-zinc-950 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 p-8 opacity-10">
             <BookOpen className="size-24" />
