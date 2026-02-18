@@ -17,7 +17,8 @@ interface MonthlySummaryProps {
     netProfit: number;
     expenseBreakdown: {
       general: number;
-      settlements: number;
+      commission: number;
+      labor: number;
       extra: number;
     };
   };
@@ -62,10 +63,18 @@ export function MonthlySummary({ summary }: MonthlySummaryProps) {
               </div>
               <div className="flex flex-col">
                 <span className="text-[10px] text-orange-400 font-bold">
-                  인건비 정산
+                  커미션
                 </span>
                 <span className="text-xs font-bold text-orange-700 dark:text-orange-300">
-                  ₩{summary.expenseBreakdown.settlements.toLocaleString()}
+                  ₩{summary.expenseBreakdown.commission.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] text-orange-400 font-bold">
+                  인건비
+                </span>
+                <span className="text-xs font-bold text-orange-700 dark:text-orange-300">
+                  ₩{summary.expenseBreakdown.labor.toLocaleString()}
                 </span>
               </div>
             </div>

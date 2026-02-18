@@ -119,6 +119,12 @@ export async function getMonthlyFinance(year: number, month: number) {
       ...data,
     }));
 
+    // 정산 내역 분리 (주급=커미션, 월급=인건비)
+    const commissionSettlements = settlements.filter(
+      (s) => s.type === "WEEKLY",
+    );
+    const laborSettlements = settlements.filter((s) => s.type === "MONTHLY");
+
     return {
       success: true,
       data: {
@@ -128,7 +134,11 @@ export async function getMonthlyFinance(year: number, month: number) {
           netProfit: totalRevenue - totalExpense,
           expenseBreakdown: {
             general: expenses.reduce((sum, e) => sum + e.amount, 0),
-            settlements: settlements.reduce((sum, s) => sum + s.totalAmount, 0),
+            commission: commissionSettlements.reduce(
+              (sum, s) => sum + s.totalAmount,
+              0,
+            ),
+            labor: laborSettlements.reduce((sum, s) => sum + s.totalAmount, 0),
             extra: extraPayments.reduce((sum, ex) => sum + ex.amount, 0),
           },
         },

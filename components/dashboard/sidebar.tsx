@@ -15,6 +15,7 @@ import {
   Settings,
   PlusCircle,
   Menu,
+  History,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ const menuItems = [
   { name: "월급정산", icon: Wallet, href: "/settlement/monthly" },
   { name: "지출관리", icon: TrendingDown, href: "/expenses" },
   { name: "출퇴근관리", icon: Clock, href: "/attendance" },
+  { name: "근태기록", icon: History, href: "/attendance/history" },
 ];
 
 export function Sidebar() {

@@ -28,7 +28,8 @@ export interface FinanceData {
     netProfit: number;
     expenseBreakdown: {
       general: number;
-      settlements: number;
+      commission: number;
+      labor: number;
       extra: number;
     };
   };
@@ -163,12 +164,26 @@ export function FinancePageClient({
                             <CreditCard className="size-4 text-blue-600" />
                           </div>
                           <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">
-                            인건비 (주급/월급 정산액)
+                            커미션 정산 (주급)
                           </span>
                         </div>
                         <span className="font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
                           ₩
-                          {data.summary.expenseBreakdown.settlements.toLocaleString()}
+                          {data.summary.expenseBreakdown.commission.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="size-8 bg-cyan-100 dark:bg-cyan-950/40 rounded-lg flex items-center justify-center">
+                            <CreditCard className="size-4 text-cyan-600" />
+                          </div>
+                          <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">
+                            인건비 정산 (월급)
+                          </span>
+                        </div>
+                        <span className="font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+                          ₩
+                          {data.summary.expenseBreakdown.labor.toLocaleString()}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
