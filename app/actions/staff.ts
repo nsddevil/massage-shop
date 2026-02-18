@@ -65,9 +65,13 @@ export async function restoreEmployee(id: string) {
   }
 }
 
-export async function getEmployees() {
+export async function getEmployees(
+  options: { includeResigned?: boolean } = { includeResigned: true },
+) {
   try {
+    const whereClause = options.includeResigned ? {} : { resignedAt: null };
     const employees = await prisma.employee.findMany({
+      where: whereClause,
       orderBy: { joinedAt: "desc" },
     });
     return { success: true, data: employees };
