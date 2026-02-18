@@ -26,7 +26,7 @@ const menuItems = [
   { name: "직원관리", icon: Users, href: "/staff" },
   { name: "코스관리", icon: BookOpen, href: "/courses" },
   { name: "일별매출", icon: ReceiptText, href: "/sales" },
-  { name: "월별매출", icon: BarChart3, href: "/sales/monthly" },
+  { name: "월별 경영분석", icon: BarChart3, href: "/finance" },
   { name: "주급정산", icon: Coins, href: "/settlement/weekly" },
   { name: "월급정산", icon: Wallet, href: "/settlement/monthly" },
   { name: "지출관리", icon: TrendingDown, href: "/expenses" },
