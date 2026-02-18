@@ -87,6 +87,7 @@ model Course {
   type     CourseType
   duration Int
   price    Int
+  isActive Boolean    @default(true)
   sales    Sale[]
 
   createdAt DateTime @default(now())
