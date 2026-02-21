@@ -161,7 +161,12 @@ export function SalesPageClient({
           <section className="space-y-4 relative">
             {loading && (
               <div className="absolute inset-0 bg-white/50 dark:bg-black/50 z-10 flex items-center justify-center rounded-xl backdrop-blur-sm">
-                {/* Loader handled by parent or shared */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                  <span className="text-sm font-bold text-emerald-600">
+                    내역 불러오는 중...
+                  </span>
+                </div>
               </div>
             )}
             <div className="flex items-center gap-2">

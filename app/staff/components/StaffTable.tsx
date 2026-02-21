@@ -10,17 +10,12 @@ import {
   Wallet,
   Coins,
   Edit2,
-  Trash2,
   Loader2,
   UserMinus,
   UserPlus,
 } from "lucide-react";
 import { Employee, ROLE_LABELS } from "@/types";
-import {
-  deleteEmployee,
-  resignEmployee,
-  restoreEmployee,
-} from "@/app/actions/staff";
+import { resignEmployee, restoreEmployee } from "@/app/actions/staff";
 import {
   Table,
   TableBody,
@@ -48,19 +43,7 @@ interface StaffTableProps {
 
 export function StaffTable({ employees }: StaffTableProps) {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [isPending, setIsPending] = useState<string | null>(null);
-
-  const handleDelete = async (id: string, name: string) => {
-    if (confirm(`${name} 직원의 모든 정보를 삭제하시겠습니까?`)) {
-      setIsDeleting(id);
-      const result = await deleteEmployee(id);
-      setIsDeleting(null);
-      if (!result.success) {
-        alert(result.error);
-      }
-    }
-  };
 
   const handleResign = async (id: string, name: string) => {
     if (confirm(`${name} 직원을 오늘 날짜로 퇴사 처리하시겠습니까?`)) {
@@ -157,12 +140,10 @@ export function StaffTable({ employees }: StaffTableProps) {
                       <Button
                         variant="secondary"
                         size="icon"
-                        disabled={
-                          isDeleting === staff.id || isPending === staff.id
-                        }
+                        disabled={isPending === staff.id}
                         className="size-9 rounded-xl shadow-sm bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 border-none"
                       >
-                        {isDeleting === staff.id || isPending === staff.id ? (
+                        {isPending === staff.id ? (
                           <Loader2 className="size-4 animate-spin" />
                         ) : (
                           <MoreHorizontal className="size-5" />
@@ -198,13 +179,6 @@ export function StaffTable({ employees }: StaffTableProps) {
                           재직으로 복구
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem
-                        className="gap-3 py-2.5 px-3 font-bold text-sm text-red-600 focus:text-red-600 rounded-xl transition-all cursor-pointer"
-                        onClick={() => handleDelete(staff.id, staff.name)}
-                      >
-                        <Trash2 className="size-4" />
-                        데이터 삭제
-                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -390,14 +364,10 @@ export function StaffTable({ employees }: StaffTableProps) {
                             <Button
                               variant="ghost"
                               size="icon"
-                              disabled={
-                                isDeleting === staff.id ||
-                                isPending === staff.id
-                              }
+                              disabled={isPending === staff.id}
                               className="size-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
                             >
-                              {isDeleting === staff.id ||
-                              isPending === staff.id ? (
+                              {isPending === staff.id ? (
                                 <Loader2 className="size-4 animate-spin" />
                               ) : (
                                 <MoreHorizontal className="size-4" />
@@ -436,13 +406,6 @@ export function StaffTable({ employees }: StaffTableProps) {
                                 재직으로 복구
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem
-                              className="gap-2 font-medium text-red-600 focus:text-red-600 cursor-pointer"
-                              onClick={() => handleDelete(staff.id, staff.name)}
-                            >
-                              <Trash2 className="size-3.5" />
-                              데이터 삭제
-                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

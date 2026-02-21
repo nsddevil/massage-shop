@@ -159,7 +159,7 @@ export function SaleEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden border-none shadow-2xl max-h-[90vh] flex flex-col [&>button]:text-white">
+      <DialogContent className="sm:max-w-[550px] p-0 border-none shadow-2xl max-h-[85dvh] overflow-y-auto [&>button]:text-white">
         <div className="bg-blue-600 p-8 text-white relative overflow-hidden">
           <DialogHeader className="relative z-10">
             <div className="size-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
@@ -169,109 +169,70 @@ export function SaleEditDialog({
               매출 내역 수정
             </DialogTitle>
             <DialogDescription className="text-blue-100 font-medium">
-              잘못 입력된 코스나 관리사 정보를 수정합니다.
+              기존 매출 내역의 정보를 수정합니다.
             </DialogDescription>
           </DialogHeader>
           <CheckCircle2 className="size-32 text-white/10 absolute -right-8 -bottom-8 rotate-12" />
         </div>
 
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="p-8 space-y-6 bg-white dark:bg-zinc-950"
-          >
-            <div className="grid grid-cols-1 gap-5">
-              {/* 날짜 선택 */}
-              <FormField
-                control={form.control}
-                name="createdAt"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel className="font-bold text-zinc-700 dark:text-zinc-300">
-                      매출 일자
-                    </FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "h-12 pl-3 text-left font-bold rounded-xl border-zinc-200 dark:border-zinc-800 focus:ring-blue-500",
-                              !field.value && "text-muted-foreground",
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP", { locale: ko })
-                            ) : (
-                              <span>날짜를 선택하세요</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                          locale={ko}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* 코스 선택 */}
-              <FormField
-                control={form.control}
-                name="courseId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-bold text-zinc-700 dark:text-zinc-300">
-                      코스 선택
-                    </FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="h-12 rounded-xl border-zinc-200 dark:border-zinc-800 font-bold focus:ring-blue-500">
-                          <SelectValue placeholder="서비스 코스를 선택하세요" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="rounded-xl">
-                        {courses.map((course) => (
-                          <SelectItem
-                            key={course.id}
-                            value={course.id}
-                            className="font-bold"
-                          >
-                            {course.name} ({course.duration}분){" "}
-                            {!course.isActive && "(숨김)"}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                {/* 결제 방법 */}
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="p-8 space-y-6 bg-white dark:bg-zinc-950">
+              <div className="grid grid-cols-1 gap-5">
+                {/* 날짜 선택 */}
                 <FormField
                   control={form.control}
-                  name="payMethod"
+                  name="createdAt"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="font-bold text-zinc-700 dark:text-zinc-300">
+                        매출 일자
+                      </FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "h-12 pl-3 text-left font-bold rounded-xl border-zinc-200 dark:border-zinc-800 focus:ring-blue-500",
+                                !field.value && "text-muted-foreground",
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP", { locale: ko })
+                              ) : (
+                                <span>날짜를 선택하세요</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date > new Date() || date < new Date("1900-01-01")
+                            }
+                            initialFocus
+                            locale={ko}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* 코스 선택 */}
+                <FormField
+                  control={form.control}
+                  name="courseId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-bold text-zinc-700 dark:text-zinc-300">
-                        결제 방법
+                        코스 선택
                       </FormLabel>
                       <Select
                         onValueChange={field.onChange}
@@ -279,21 +240,20 @@ export function SaleEditDialog({
                       >
                         <FormControl>
                           <SelectTrigger className="h-12 rounded-xl border-zinc-200 dark:border-zinc-800 font-bold focus:ring-blue-500">
-                            <SelectValue />
+                            <SelectValue placeholder="서비스 코스를 선택하세요" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent className="rounded-xl">
-                          {Object.entries(PAY_METHOD_LABELS).map(
-                            ([value, label]) => (
-                              <SelectItem
-                                key={value}
-                                value={value}
-                                className="font-bold"
-                              >
-                                {label}
-                              </SelectItem>
-                            ),
-                          )}
+                          {courses.map((course) => (
+                            <SelectItem
+                              key={course.id}
+                              value={course.id}
+                              className="font-bold"
+                            >
+                              {course.name} ({course.duration}분){" "}
+                              {!course.isActive && "(숨김)"}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -301,98 +261,137 @@ export function SaleEditDialog({
                   )}
                 />
 
-                {/* 결제 금액 */}
-                <FormField
-                  control={form.control}
-                  name="totalPrice"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-bold text-zinc-700 dark:text-zinc-300">
-                        실 결제금액 (원)
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          className="h-12 rounded-xl border-zinc-200 dark:border-zinc-800 font-bold focus-visible:ring-blue-500"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(Number(e.target.value))
-                          }
+                <div className="grid grid-cols-2 gap-4">
+                  {/* 결제 방법 */}
+                  <FormField
+                    control={form.control}
+                    name="payMethod"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-zinc-700 dark:text-zinc-300">
+                          결제 방법
+                        </FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="h-12 rounded-xl border-zinc-200 dark:border-zinc-800 font-bold focus:ring-blue-500">
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="rounded-xl">
+                            {Object.entries(PAY_METHOD_LABELS).map(
+                              ([value, label]) => (
+                                <SelectItem
+                                  key={value}
+                                  value={value}
+                                  className="font-bold"
+                                >
+                                  {label}
+                                </SelectItem>
+                              ),
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* 결제 금액 */}
+                  <FormField
+                    control={form.control}
+                    name="totalPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-zinc-700 dark:text-zinc-300">
+                          실 결제금액 (원)
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            className="h-12 rounded-xl border-zinc-200 dark:border-zinc-800 font-bold focus-visible:ring-blue-500"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* 관리사 선택 섹션 */}
+                <div className="space-y-4">
+                  <FormLabel className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                    <User className="size-4" />
+                    관리사 지정 {selectedCourse?.type === "DOUBLE" && "(2명)"}
+                  </FormLabel>
+
+                  <div className="space-y-3">
+                    {form.watch("therapists").map((_, index) => (
+                      <div
+                        key={index}
+                        className="flex gap-3 items-end bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800"
+                      >
+                        <FormField
+                          control={form.control}
+                          name={`therapists.${index}.employeeId`}
+                          render={({ field }) => (
+                            <FormItem className="flex-1">
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="h-10 rounded-lg border-zinc-200 dark:border-zinc-800 font-bold bg-white dark:bg-zinc-900">
+                                    <SelectValue placeholder="관리사 선택" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {therapistsList.map((emp) => (
+                                    <SelectItem
+                                      key={emp.id}
+                                      value={emp.id}
+                                      className="font-bold"
+                                    >
+                                      {emp.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </FormItem>
+                          )}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* 관리사 선택 섹션 */}
-              <div className="space-y-4">
-                <FormLabel className="font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                  <User className="size-4" />
-                  관리사 지정 {selectedCourse?.type === "DOUBLE" && "(2명)"}
-                </FormLabel>
-
-                <div className="space-y-3">
-                  {form.watch("therapists").map((_, index) => (
-                    <div
-                      key={index}
-                      className="flex gap-3 items-end bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800"
-                    >
-                      <FormField
-                        control={form.control}
-                        name={`therapists.${index}.employeeId`}
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                            >
+                        <FormField
+                          control={form.control}
+                          name={`therapists.${index}.isChoice`}
+                          render={({ field }) => (
+                            <FormItem className="flex items-center space-x-2 space-y-0 pb-2">
                               <FormControl>
-                                <SelectTrigger className="h-10 rounded-lg border-zinc-200 dark:border-zinc-800 font-bold bg-white dark:bg-zinc-900">
-                                  <SelectValue placeholder="관리사 선택" />
-                                </SelectTrigger>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  className="size-5 rounded-md border-zinc-300 dark:border-zinc-700 data-[state=checked]:bg-blue-600"
+                                />
                               </FormControl>
-                              <SelectContent>
-                                {therapistsList.map((emp) => (
-                                  <SelectItem
-                                    key={emp.id}
-                                    value={emp.id}
-                                    className="font-bold"
-                                  >
-                                    {emp.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`therapists.${index}.isChoice`}
-                        render={({ field }) => (
-                          <FormItem className="flex items-center space-x-2 space-y-0 pb-2">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                className="size-5 rounded-md border-zinc-300 dark:border-zinc-700 data-[state=checked]:bg-blue-600"
-                              />
-                            </FormControl>
-                            <FormLabel className="text-xs font-bold text-zinc-500 cursor-pointer">
-                              초이스
-                            </FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  ))}
+                              <FormLabel className="text-xs font-bold text-zinc-500 cursor-pointer">
+                                초이스
+                              </FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
 
-            <DialogFooter className="pt-4">
+            <DialogFooter className="p-6 md:p-8 pt-4 pb-12 md:pb-12 border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950">
               <Button
                 type="submit"
                 disabled={isLoading}
