@@ -1,7 +1,5 @@
-export enum CourseType {
-  SINGLE = "SINGLE",
-  DOUBLE = "DOUBLE",
-}
+import { CourseType } from "@/generated/prisma/enums";
+export { CourseType };
 
 export interface Course {
   id: string;

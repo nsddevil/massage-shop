@@ -123,7 +123,9 @@ export async function getMonthlyFinance(year: number, month: number) {
     const commissionSettlements = settlements.filter(
       (s) => s.type === "WEEKLY",
     );
-    const laborSettlements = settlements.filter((s) => s.type === "MONTHLY");
+    const laborSettlements = settlements.filter((s) =>
+      ["MONTHLY", "SALARY"].includes(s.type),
+    );
 
     return {
       success: true,

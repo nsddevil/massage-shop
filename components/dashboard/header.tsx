@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Search,
-  Calendar as CalendarIcon,
-  Bell,
-  Menu as MenuIcon,
-} from "lucide-react";
+import { Calendar as CalendarIcon, Menu as MenuIcon } from "lucide-react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -14,16 +9,14 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { usePathname } from "next/navigation";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
@@ -36,9 +29,76 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
+const pathMap: Record<string, string> = {
+  "/": "대시보드",
+  "/sales": "매출 관리",
+  "/staff": "직원 관리",
+  "/courses": "코스 관리",
+  "/finance": "경영 분석",
+  "/settlement/salary": "급여 정산",
+  "/settlement/salary/history": "정산 내역",
+  "/settlement/weekly": "주급 정산",
+  "/settlement/monthly": "월급 정산",
+  "/settings": "환경 설정",
+};
+
 export function Header() {
+  const pathname = usePathname();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
+  const getBreadcrumbs = () => {
+    const segments = pathname.split("/").filter(Boolean);
+    if (segments.length === 0) {
+      return (
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbPage className="font-semibold text-zinc-900 dark:text-zinc-100">
+              대시보드
+            </BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      );
+    }
+
+    return (
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink
+            href="/"
+            className="text-zinc-500 hover:text-zinc-900 transition-colors"
+          >
+            대시보드
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        {segments.map((segment, index) => {
+          const path = `/${segments.slice(0, index + 1).join("/")}`;
+          const isLast = index === segments.length - 1;
+          const label = pathMap[path] || segment;
+
+          return (
+            <div key={path} className="flex items-center gap-2">
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                {isLast ? (
+                  <BreadcrumbPage className="font-semibold text-zinc-900 dark:text-zinc-100">
+                    {label}
+                  </BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink
+                    href={path}
+                    className="text-zinc-500 hover:text-zinc-900 transition-colors"
+                  >
+                    {label}
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+            </div>
+          );
+        })}
+      </BreadcrumbList>
+    );
+  };
 
   return (
     <header className="flex items-center justify-between px-4 md:px-8 h-16 bg-white dark:bg-zinc-950/50 backdrop-blur-md sticky top-0 z-10 border-b border-zinc-100 dark:border-zinc-800/50">
@@ -62,29 +122,12 @@ export function Header() {
           </SheetContent>
         </Sheet>
 
-        <Breadcrumb className="hidden md:block">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink
-                href="/"
-                className="text-zinc-500 hover:text-zinc-900 transition-colors"
-              >
-                대시보드
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="font-semibold text-zinc-900 dark:text-zinc-100">
-                개요
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+        <Breadcrumb className="hidden md:block">{getBreadcrumbs()}</Breadcrumb>
       </div>
 
       <div className="flex items-center gap-2 md:gap-6">
-        {/* Date Selector - Desktop Only */}
-        <div className="hidden sm:block">
+        {/* Date Selector - Always visible if possible, or desktop only as before */}
+        <div className="sm:block">
           <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
             <PopoverTrigger asChild>
               <Button
@@ -109,25 +152,6 @@ export function Header() {
               />
             </PopoverContent>
           </Popover>
-        </div>
-
-        {/* Notifications & Profile */}
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900"
-          >
-            <Bell className="size-5" />
-            <span className="absolute top-2.5 right-2.5 size-1.5 bg-red-500 rounded-full border border-white dark:border-zinc-950"></span>
-          </Button>
-          <Separator orientation="vertical" className="h-6" />
-          <div className="flex items-center gap-3 cursor-pointer pl-1">
-            <Avatar className="size-9 border-2 border-white dark:border-zinc-800 shadow-sm">
-              <AvatarImage src="https://github.com/shadcn.png" />
-              <AvatarFallback>관리</AvatarFallback>
-            </Avatar>
-          </div>
         </div>
       </div>
     </header>

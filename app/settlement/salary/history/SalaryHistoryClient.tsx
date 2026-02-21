@@ -29,9 +29,10 @@ import { format } from "date-fns";
 import { getSalarySettlementHistory } from "@/app/actions/settlement";
 import { toast } from "sonner";
 import { HistoryDetailDialog } from "./_components/HistoryDetailDialog";
+import { SettlementWithEmployee } from "@/types";
 
 interface SalaryHistoryClientProps {
-  initialHistory: any[];
+  initialHistory: SettlementWithEmployee[];
   initialYear: number;
   initialMonth: number;
 }
@@ -41,12 +42,14 @@ export function SalaryHistoryClient({
   initialYear,
   initialMonth,
 }: SalaryHistoryClientProps) {
-  const [history, setHistory] = useState(initialHistory);
+  const [history, setHistory] =
+    useState<SettlementWithEmployee[]>(initialHistory);
   const [year, setYear] = useState(initialYear);
   const [month, setMonth] = useState(initialMonth);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedItem, setSelectedItem] =
+    useState<SettlementWithEmployee | null>(null);
 
   const getRoleLabel = (role: string) => {
     switch (role) {
@@ -99,6 +102,12 @@ export function SalaryHistoryClient({
   const filteredHistory = history.filter((item) =>
     item.employee.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  const totalAmount = filteredHistory.reduce(
+    (sum, item) => sum + item.totalAmount,
+    0,
+  );
+  const totalCount = filteredHistory.length;
 
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-zinc-50 dark:bg-black">
@@ -160,15 +169,34 @@ export function SalaryHistoryClient({
           </div>
 
           {/* Search & Stats */}
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col md:flex-row gap-6">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-zinc-400" />
               <Input
                 placeholder="직원 이름으로 검색..."
-                className="pl-10 h-14 rounded-2xl bg-white dark:bg-zinc-900 border-none shadow-sm font-bold"
+                className="pl-10 h-16 rounded-2xl bg-white dark:bg-zinc-900 border-none shadow-sm font-bold text-lg"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 md:w-[400px]">
+              <Card className="p-4 border-none shadow-sm bg-blue-600 text-white rounded-2xl flex flex-col justify-center">
+                <p className="text-[10px] font-black uppercase tracking-wider opacity-80">
+                  총 정산 금액
+                </p>
+                <p className="text-xl font-black">
+                  ₩{totalAmount.toLocaleString()}
+                </p>
+              </Card>
+              <Card className="p-4 border-none shadow-sm bg-white dark:bg-zinc-900 rounded-2xl flex flex-col justify-center border border-zinc-100 dark:border-zinc-800">
+                <p className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
+                  정산 인원
+                </p>
+                <p className="text-xl font-black text-zinc-900 dark:text-zinc-50">
+                  {totalCount}명
+                </p>
+              </Card>
             </div>
           </div>
 

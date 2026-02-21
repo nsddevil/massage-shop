@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Header } from "@/components/dashboard/header";
 import {
   Wallet,
@@ -29,11 +29,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-// getMonthlySettlementCandidates, confirmSettlement 는 제거되거나 리팩토링 되었습니다.
-// import {
-//   getMonthlySettlementCandidates,
-//   confirmSettlement,
-// } from "@/app/actions/settlement";
+import {
+  getMonthlySettlementCandidates,
+  confirmSettlement,
+} from "@/app/actions/settlement";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -47,12 +46,11 @@ interface SettlementCandidate {
     periodTotalDays: number;
   };
   details: {
-    workAmount: number;
-    mealAmount: number;
+    baseAmount: number;
+    mealAllowance: number;
     bonusAmount: number;
     advanceAmount: number;
-    baseSalary: number;
-    hourlyRate: number;
+    totalAmount: number;
   };
   totalAmount: number;
   extras: any[];
@@ -85,7 +83,7 @@ export function MonthlySettlementClient({
     setLoading(true);
     const result = await getMonthlySettlementCandidates(y, m);
     if (result.success) {
-      setCandidates(result.data);
+      setCandidates(result.data || []);
       setSelectedIds([]); // Reset selection on fetch
     } else {
       toast.error("정산 데이터를 불러오는데 실패했습니다.");
@@ -520,16 +518,17 @@ export function MonthlySettlementClient({
                 <div className="flex justify-between text-sm">
                   <span className="text-zinc-500">기본 근무 수당</span>
                   <span className="font-medium">
-                    ₩ {selectedCandidate.details.workAmount.toLocaleString()}
+                    ₩ {selectedCandidate.details.baseAmount.toLocaleString()}
                   </span>
                 </div>
-                {selectedCandidate.details.mealAmount > 0 && (
+                {selectedCandidate.details.mealAllowance > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-zinc-500">
                       식대 ({selectedCandidate.stats.workedDays}일)
                     </span>
                     <span className="font-medium">
-                      ₩ {selectedCandidate.details.mealAmount.toLocaleString()}
+                      ₩{" "}
+                      {selectedCandidate.details.mealAllowance.toLocaleString()}
                     </span>
                   </div>
                 )}

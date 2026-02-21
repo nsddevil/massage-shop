@@ -26,7 +26,10 @@ export default async function SalarySettlementPage() {
         <Sidebar />
       </aside>
 
-      <SalarySettlementClient employees={employees} stats={stats} />
+      <SalarySettlementClient
+        employees={employees || []}
+        stats={stats || { settledCount: 0, unpaidAdvanceAmount: 0 }}
+      />
     </div>
   );
 }

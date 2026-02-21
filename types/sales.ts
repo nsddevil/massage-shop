@@ -1,4 +1,4 @@
-import { PayMethod, CourseType } from "@/generated/prisma";
+import { PayMethod, CourseType } from "@/generated/prisma/enums";
 
 export type { PayMethod };
 

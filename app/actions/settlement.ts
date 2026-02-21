@@ -1,13 +1,11 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { Role, ExtraPayment } from "@/generated/prisma";
+import { Role, ExtraPayment } from "@/generated/prisma/client";
 import {
   startOfDay,
   endOfDay,
   differenceInCalendarDays,
-  addMonths,
-  subDays,
   startOfMonth,
   endOfMonth,
 } from "date-fns";
@@ -17,7 +15,11 @@ import {
   SalaryCalculationDetail,
   EmployeeSettlementRole,
 } from "@/types";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/generated/prisma/client";
+
+type SettlementWithEmployee = Prisma.SettlementGetPayload<{
+  include: { employee: { select: { id: true; name: true; role: true } } };
+}>;
 
 /**
  * 월급 정산 대상 직원 리스트 조회
@@ -204,7 +206,7 @@ export async function getSalarySettlementHistory(
   month?: number,
 ) {
   try {
-    const where: { type: string; periodEnd?: { gte: Date; lte: Date } } = {
+    const where: Prisma.SettlementWhereInput = {
       type: "SALARY",
     };
 
@@ -224,7 +226,10 @@ export async function getSalarySettlementHistory(
       orderBy: { createdAt: "desc" },
     });
 
-    return { success: true, data: history };
+    return {
+      success: true,
+      data: history as unknown as SettlementWithEmployee[],
+    };
   } catch (error) {
     console.error("Failed to fetch salary history:", error);
     return { success: false, error: "정산 내역을 불러오는데 실패했습니다." };
@@ -299,7 +304,7 @@ export async function confirmSettlement(data: {
           totalDaysInPeriod: data.totalDaysInPeriod,
           workedDays: data.workedDays,
           totalAmount: data.totalAmount,
-          details: data.details,
+          details: data.details as unknown as Prisma.InputJsonValue,
         },
       });
 
@@ -440,7 +445,7 @@ export async function createSettlement(data: {
           periodStart: data.periodStart,
           periodEnd: data.periodEnd,
           totalAmount: data.totalAmount,
-          details: data.details,
+          details: data.details as unknown as Prisma.InputJsonValue,
         },
       });
 
@@ -457,5 +462,72 @@ export async function createSettlement(data: {
   } catch (error) {
     console.error("Failed to create weekly settlement:", error);
     return { success: false, error: "정산 생성에 실패했습니다." };
+  }
+}
+/**
+ * 월간 정산 대상자 목록 조회
+ */
+export async function getMonthlySettlementCandidates(
+  year: number,
+  month: number,
+) {
+  try {
+    const start = startOfMonth(new Date(year, month - 1, 1));
+    const end = endOfMonth(new Date(year, month - 1, 1));
+
+    const employees = await prisma.employee.findMany({
+      where: { resignedAt: null },
+    });
+
+    const candidates = await Promise.all(
+      employees.map(async (employee) => {
+        const calcRes = await calculateSalaryAction(employee.id, start, end);
+        if (!calcRes.success || !calcRes.data) return null;
+
+        const { period, details, extraPayments } = calcRes.data;
+
+        // 이미 정산되었는지 확인
+        const existing = await prisma.settlement.findFirst({
+          where: {
+            employeeId: employee.id,
+            type: "SALARY",
+            periodStart: start,
+            periodEnd: end,
+          },
+        });
+
+        return {
+          employee,
+          period: { start, end },
+          stats: {
+            workedDays: period.workedDays,
+            totalWorkHours: period.totalWorkHours,
+            periodTotalDays: period.totalDays,
+          },
+          details: {
+            baseAmount: details.baseAmount,
+            mealAllowance: details.mealAllowance,
+            bonusAmount: details.bonusAmount,
+            advanceAmount: details.advanceAmount,
+            totalAmount: details.totalAmount,
+          },
+          totalAmount: details.totalAmount,
+          extras: extraPayments,
+          isSettled: !!existing,
+          settlementId: existing?.id,
+        };
+      }),
+    );
+
+    return {
+      success: true,
+      data: candidates.filter((c) => c !== null),
+    };
+  } catch (error) {
+    console.error("Failed to fetch monthly settlement candidates:", error);
+    return {
+      success: false,
+      error: "정산 대상자 정보를 불러오는데 실패했습니다.",
+    };
   }
 }

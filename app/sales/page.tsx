@@ -25,10 +25,10 @@ export default async function SalesPage() {
       </aside>
 
       <SalesPageClient
-        initialSales={dailySalesRes.success ? dailySalesRes.data : []}
-        initialSummary={summaryRes.success ? summaryRes.data : null}
-        courses={coursesRes.success ? coursesRes.data : []}
-        employees={employeesRes.success ? employeesRes.data : []}
+        initialSales={dailySalesRes.success ? dailySalesRes.data || [] : []}
+        initialSummary={summaryRes.success ? summaryRes.data || null : null}
+        courses={coursesRes.success ? coursesRes.data || [] : []}
+        employees={employeesRes.success ? employeesRes.data || [] : []}
       />
     </div>
   );

@@ -1,9 +1,5 @@
-export enum Role {
-  OWNER = "OWNER",
-  MANAGER = "MANAGER",
-  THERAPIST = "THERAPIST",
-  STAFF = "STAFF",
-}
+import { Role } from "@/generated/prisma/enums";
+export { Role };
 
 export interface Employee {
   id: string;

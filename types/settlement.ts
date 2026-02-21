@@ -1,4 +1,4 @@
-import { Employee, Settlement, ExtraPayment } from "@/generated/prisma";
+import { Employee, Settlement, ExtraPayment } from "@/generated/prisma/client";
 
 export type SettlementType = "SALARY" | "WEEKLY";
 export type EmployeeSettlementRole = "REGULAR" | "STAFF";

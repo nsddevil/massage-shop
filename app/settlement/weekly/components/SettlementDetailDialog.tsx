@@ -28,7 +28,7 @@ export function SettlementDetailDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl p-0 overflow-hidden border-none shadow-2xl max-h-[85vh] flex flex-col [&>button]:text-zinc-500 dark:[&>button]:text-white">
+      <DialogContent className="max-w-2xl w-[95vw] rounded-3xl p-0 overflow-hidden border-none shadow-2xl max-h-[90dvh] flex flex-col [&>button]:text-zinc-500 dark:[&>button]:text-white bg-white dark:bg-zinc-900">
         <DialogHeader className="p-6 bg-zinc-900">
           <DialogTitle className="text-xl font-black text-white flex items-center gap-3">
             <span className="text-emerald-400 font-black">

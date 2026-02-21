@@ -17,7 +17,7 @@ export default async function SalaryHistoryPage() {
       </aside>
 
       <SalaryHistoryClient
-        initialHistory={initialHistory}
+        initialHistory={initialHistory || []}
         initialYear={year}
         initialMonth={month}
       />

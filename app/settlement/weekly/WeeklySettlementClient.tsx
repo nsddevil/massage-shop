@@ -57,7 +57,11 @@ export function WeeklySettlementClient({
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    // Cascading render 경고를 피하기 위해 비동기로 처리
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   // 월요일~일요일 범위 계산
@@ -102,8 +106,14 @@ export function WeeklySettlementClient({
       periodStart: start,
       periodEnd: end,
       totalAmount: item.netAmount,
-      details: item.details,
-      extraPaymentIds: item.details.extras.map((e: any) => e.id),
+      details: {
+        baseAmount: item.totalCommission,
+        mealAllowance: 0,
+        bonusAmount: item.totalBonus,
+        advanceAmount: item.totalAdvance,
+        totalAmount: item.netAmount,
+      },
+      extraPaymentIds: [], // 주급에서는 별도 관리 안 함
     });
 
     if (result.success) {

@@ -18,14 +18,19 @@ export default async function FinancePage() {
 
       <FinancePageClient
         initialData={
-          financeRes.success
-            ? financeRes.data
+          financeRes.success && financeRes.data
+            ? (financeRes.data as any)
             : {
                 summary: {
                   totalRevenue: 0,
                   totalExpense: 0,
                   netProfit: 0,
-                  expenseBreakdown: { general: 0, settlements: 0, extra: 0 },
+                  expenseBreakdown: {
+                    general: 0,
+                    commission: 0,
+                    labor: 0,
+                    extra: 0,
+                  },
                 },
                 chartData: [],
               }
