@@ -17,6 +17,9 @@ export async function updateEmployee(data: UpdateEmployeeInput) {
       },
     });
     revalidatePath("/staff");
+    revalidatePath("/attendance");
+    revalidatePath("/settlement/salary");
+    revalidatePath("/settlement/monthly");
     return { success: true, data: updatedEmployee };
   } catch (error) {
     console.error("Failed to update employee:", error);
@@ -30,6 +33,9 @@ export async function deleteEmployee(id: string) {
       where: { id },
     });
     revalidatePath("/staff");
+    revalidatePath("/attendance");
+    revalidatePath("/settlement/salary");
+    revalidatePath("/settlement/monthly");
     return { success: true };
   } catch (error) {
     console.error("Failed to delete employee:", error);
@@ -44,6 +50,9 @@ export async function resignEmployee(id: string, resignedAt: Date) {
       data: { resignedAt },
     });
     revalidatePath("/staff");
+    revalidatePath("/attendance");
+    revalidatePath("/settlement/salary");
+    revalidatePath("/settlement/monthly");
     return { success: true };
   } catch (error) {
     console.error("Failed to resign employee:", error);
@@ -58,6 +67,9 @@ export async function restoreEmployee(id: string) {
       data: { resignedAt: null },
     });
     revalidatePath("/staff");
+    revalidatePath("/attendance");
+    revalidatePath("/settlement/salary");
+    revalidatePath("/settlement/monthly");
     return { success: true };
   } catch (error) {
     console.error("Failed to restore employee:", error);
@@ -92,6 +104,9 @@ export async function createEmployee(data: CreateEmployeeInput) {
       },
     });
     revalidatePath("/staff");
+    revalidatePath("/attendance");
+    revalidatePath("/settlement/salary");
+    revalidatePath("/settlement/monthly");
     return { success: true, data: newEmployee };
   } catch (error) {
     console.error("Failed to create employee:", error);
