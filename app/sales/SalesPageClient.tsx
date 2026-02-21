@@ -16,7 +16,6 @@ import { SalesTable } from "./components/SalesTable";
 import { SaleRegistrationDialog } from "./components/SaleRegistrationDialog";
 import { Course, Employee, SaleWithDetails } from "@/types";
 import { format, subDays, addDays } from "date-fns";
-import { ko } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -171,7 +170,12 @@ export function SalesPageClient({
                 {format(currentDate, "MM월 dd일")} 매출 내역
               </h2>
             </div>
-            <SalesTable sales={sales} />
+            <SalesTable
+              sales={sales}
+              courses={courses}
+              employees={employees}
+              onSuccess={() => fetchData(currentDate)}
+            />
           </section>
         </div>
       </main>
@@ -181,7 +185,8 @@ export function SalesPageClient({
         onOpenChange={setIsDialogOpen}
         courses={courses}
         employees={employees}
-        onSuccess={(newSale) => {
+        defaultDate={currentDate}
+        onSuccess={() => {
           // 현재 날짜 데이터 다시 불러오기
           fetchData(currentDate);
         }}

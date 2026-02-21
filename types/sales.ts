@@ -20,6 +20,11 @@ export interface CreateSaleInput {
   payMethod: PayMethod;
   totalPrice: number;
   therapists: SaleTherapistInput[];
+  createdAt?: Date;
+}
+
+export interface UpdateSaleInput extends CreateSaleInput {
+  id: string;
 }
 
 export interface SaleWithDetails {

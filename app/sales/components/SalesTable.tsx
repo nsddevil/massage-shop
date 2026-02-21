@@ -13,12 +13,50 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { MoreVertical, Edit2, Trash2 } from "lucide-react";
+import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { deleteSale } from "@/app/actions/sales";
+import { SaleEditDialog } from "./SaleEditDialog";
+import { Course, Employee } from "@/types";
 
 interface SalesTableProps {
   sales: SaleWithDetails[];
+  courses: Course[];
+  employees: Employee[];
+  onSuccess?: () => void;
 }
 
-export function SalesTable({ sales }: SalesTableProps) {
+export function SalesTable({
+  sales,
+  courses,
+  employees,
+  onSuccess,
+}: SalesTableProps) {
+  const [editingSale, setEditingSale] = useState<SaleWithDetails | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  const handleDelete = async (id: string) => {
+    if (confirm("정말로 이 매출 내역을 삭제하시겠습니까?")) {
+      const result = await deleteSale(id);
+      if (result.success) {
+        onSuccess?.();
+      } else {
+        alert(result.error);
+      }
+    }
+  };
+
+  const handleEdit = (sale: SaleWithDetails) => {
+    setEditingSale(sale);
+    setIsEditDialogOpen(true);
+  };
   if (sales.length === 0) {
     return (
       <Card className="border-dashed border-2 bg-zinc-50/50 dark:bg-zinc-900/10 py-20 text-center">
@@ -46,11 +84,35 @@ export function SalesTable({ sales }: SalesTableProps) {
             >
               <CardContent className="p-5 space-y-4">
                 <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center justify-between">
                       <span className="font-bold text-zinc-900 dark:text-zinc-100 text-lg">
                         {sale.course.name}
                       </span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEdit(sale)}>
+                            <Edit2 className="mr-2 h-4 w-4" />
+                            수정
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => handleDelete(sale.id)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            삭제
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-none text-[10px] h-5 font-bold">
@@ -127,6 +189,7 @@ export function SalesTable({ sales }: SalesTableProps) {
                 <TableHead className="font-bold text-zinc-400 uppercase text-[10px] text-right pr-6 h-12">
                   커미션 합계
                 </TableHead>
+                <TableHead className="w-10"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -181,6 +244,32 @@ export function SalesTable({ sales }: SalesTableProps) {
                     <TableCell className="text-right pr-6 font-black text-blue-600 dark:text-blue-400">
                       ₩{totalCommission.toLocaleString()}
                     </TableCell>
+                    <TableCell className="pr-6">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEdit(sale)}>
+                            <Edit2 className="mr-2 h-4 w-4" />
+                            수정
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => handleDelete(sale.id)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            삭제
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                   </TableRow>
                 );
               })}
@@ -188,6 +277,17 @@ export function SalesTable({ sales }: SalesTableProps) {
           </Table>
         </CardContent>
       </Card>
+
+      {editingSale && (
+        <SaleEditDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          sale={editingSale}
+          courses={courses}
+          employees={employees}
+          onSuccess={() => onSuccess?.()}
+        />
+      )}
     </div>
   );
 }

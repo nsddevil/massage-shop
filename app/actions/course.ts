@@ -16,6 +16,7 @@ export async function createCourse(data: CreateCourseInput) {
       },
     });
     revalidatePath("/courses");
+    revalidatePath("/sales");
     return { success: true, data: course };
   } catch (error) {
     console.error("Failed to create course:", error);
@@ -31,6 +32,7 @@ export async function updateCourse(data: UpdateCourseInput) {
       data: updateData,
     });
     revalidatePath("/courses");
+    revalidatePath("/sales");
     return { success: true, data: updatedCourse };
   } catch (error) {
     console.error("Failed to update course:", error);
@@ -45,6 +47,7 @@ export async function toggleCourseStatus(id: string, isActive: boolean) {
       data: { isActive },
     });
     revalidatePath("/courses");
+    revalidatePath("/sales");
     return { success: true };
   } catch (error) {
     console.error("Failed to toggle course status:", error);
@@ -71,6 +74,7 @@ export async function deleteCourse(id: string) {
       where: { id },
     });
     revalidatePath("/courses");
+    revalidatePath("/sales");
     return { success: true };
   } catch (error) {
     console.error("Failed to delete course:", error);

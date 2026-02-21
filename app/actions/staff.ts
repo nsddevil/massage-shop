@@ -20,6 +20,7 @@ export async function updateEmployee(data: UpdateEmployeeInput) {
     revalidatePath("/attendance");
     revalidatePath("/settlement/salary");
     revalidatePath("/settlement/monthly");
+    revalidatePath("/sales");
     return { success: true, data: updatedEmployee };
   } catch (error) {
     console.error("Failed to update employee:", error);
@@ -36,6 +37,7 @@ export async function deleteEmployee(id: string) {
     revalidatePath("/attendance");
     revalidatePath("/settlement/salary");
     revalidatePath("/settlement/monthly");
+    revalidatePath("/sales");
     return { success: true };
   } catch (error) {
     console.error("Failed to delete employee:", error);
@@ -53,6 +55,7 @@ export async function resignEmployee(id: string, resignedAt: Date) {
     revalidatePath("/attendance");
     revalidatePath("/settlement/salary");
     revalidatePath("/settlement/monthly");
+    revalidatePath("/sales");
     return { success: true };
   } catch (error) {
     console.error("Failed to resign employee:", error);
@@ -70,6 +73,7 @@ export async function restoreEmployee(id: string) {
     revalidatePath("/attendance");
     revalidatePath("/settlement/salary");
     revalidatePath("/settlement/monthly");
+    revalidatePath("/sales");
     return { success: true };
   } catch (error) {
     console.error("Failed to restore employee:", error);
@@ -107,6 +111,7 @@ export async function createEmployee(data: CreateEmployeeInput) {
     revalidatePath("/attendance");
     revalidatePath("/settlement/salary");
     revalidatePath("/settlement/monthly");
+    revalidatePath("/sales");
     return { success: true, data: newEmployee };
   } catch (error) {
     console.error("Failed to create employee:", error);

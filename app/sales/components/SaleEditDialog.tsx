@@ -6,8 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import { Course, Employee, PAY_METHOD_LABELS } from "@/types";
-import { createSale } from "@/app/actions/sales";
+import { Course, Employee, SaleWithDetails, PAY_METHOD_LABELS } from "@/types";
+import { updateSale } from "@/app/actions/sales";
 import {
   Dialog,
   DialogContent,
@@ -64,23 +64,23 @@ const formSchema = z.object({
   createdAt: z.date(),
 });
 
-interface SaleRegistrationDialogProps {
+interface SaleEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  sale: SaleWithDetails;
   courses: Course[];
   employees: Employee[];
-  defaultDate?: Date;
   onSuccess?: (data: any) => void;
 }
 
-export function SaleRegistrationDialog({
+export function SaleEditDialog({
   open,
   onOpenChange,
+  sale,
   courses,
   employees,
-  defaultDate = new Date(),
   onSuccess,
-}: SaleRegistrationDialogProps) {
+}: SaleEditDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const therapistsList = employees.filter(
     (e) => e.role === "THERAPIST" && !e.resignedAt,
@@ -89,29 +89,41 @@ export function SaleRegistrationDialog({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      payMethod: "CASH",
-      totalPrice: 0,
-      therapists: [{ employeeId: "", isChoice: false }],
-      createdAt: defaultDate,
+      courseId: sale.courseId,
+      payMethod: sale.payMethod,
+      totalPrice: sale.totalPrice,
+      therapists: sale.therapists.map((t) => ({
+        employeeId: t.employeeId,
+        isChoice: t.isChoice,
+      })),
+      createdAt: new Date(sale.createdAt),
     },
   });
 
-  // defaultDate가 변경되면 폼 값도 업데이트
+  // sale이 변경되면 폼 초기값 재설정
   useEffect(() => {
     if (open) {
-      form.setValue("createdAt", defaultDate);
+      form.reset({
+        courseId: sale.courseId,
+        payMethod: sale.payMethod,
+        totalPrice: sale.totalPrice,
+        therapists: sale.therapists.map((t) => ({
+          employeeId: t.employeeId,
+          isChoice: t.isChoice,
+        })),
+        createdAt: new Date(sale.createdAt),
+      });
     }
-  }, [open, defaultDate, form]);
+  }, [open, sale, form]);
 
   // 코스 선택 시 금액 및 관리사 슬롯 자동 조절
   const watchCourseId = form.watch("courseId");
   useEffect(() => {
-    if (watchCourseId) {
+    if (watchCourseId && watchCourseId !== sale.courseId) {
       const selectedCourse = courses.find((c) => c.id === watchCourseId);
       if (selectedCourse) {
         form.setValue("totalPrice", selectedCourse.price);
 
-        // 2인 코스면 관리사 슬롯 2개로 확장, 1인 코스면 1개로 축소
         if (selectedCourse.type === "DOUBLE") {
           const currentTherapists = form.getValues("therapists");
           if (currentTherapists.length < 2) {
@@ -125,15 +137,17 @@ export function SaleRegistrationDialog({
         }
       }
     }
-  }, [watchCourseId, courses, form]);
+  }, [watchCourseId, courses, form, sale.courseId]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    const result = await createSale(values);
+    const result = await updateSale({
+      id: sale.id,
+      ...values,
+    });
     setIsLoading(false);
 
     if (result.success) {
-      form.reset();
       onOpenChange(false);
       onSuccess?.(result.data);
     } else {
@@ -146,16 +160,16 @@ export function SaleRegistrationDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden border-none shadow-2xl max-h-[90vh] flex flex-col [&>button]:text-white">
-        <div className="bg-emerald-600 p-8 text-white relative overflow-hidden">
+        <div className="bg-blue-600 p-8 text-white relative overflow-hidden">
           <DialogHeader className="relative z-10">
             <div className="size-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
               <Banknote className="size-6 text-white" />
             </div>
             <DialogTitle className="text-2xl font-black tracking-tight">
-              신규 매출 등록
+              매출 내역 수정
             </DialogTitle>
-            <DialogDescription className="text-emerald-100 font-medium">
-              코스와 관리사 정보를 입력하여 매출을 기록합니다.
+            <DialogDescription className="text-blue-100 font-medium">
+              잘못 입력된 코스나 관리사 정보를 수정합니다.
             </DialogDescription>
           </DialogHeader>
           <CheckCircle2 className="size-32 text-white/10 absolute -right-8 -bottom-8 rotate-12" />
@@ -182,7 +196,7 @@ export function SaleRegistrationDialog({
                           <Button
                             variant={"outline"}
                             className={cn(
-                              "h-12 pl-3 text-left font-bold rounded-xl border-zinc-200 dark:border-zinc-800 focus:ring-emerald-500",
+                              "h-12 pl-3 text-left font-bold rounded-xl border-zinc-200 dark:border-zinc-800 focus:ring-blue-500",
                               !field.value && "text-muted-foreground",
                             )}
                           >
@@ -227,22 +241,21 @@ export function SaleRegistrationDialog({
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger className="h-12 rounded-xl border-zinc-200 dark:border-zinc-800 font-bold focus:ring-emerald-500">
+                        <SelectTrigger className="h-12 rounded-xl border-zinc-200 dark:border-zinc-800 font-bold focus:ring-blue-500">
                           <SelectValue placeholder="서비스 코스를 선택하세요" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className="rounded-xl">
-                        {courses
-                          .filter((c) => c.isActive)
-                          .map((course) => (
-                            <SelectItem
-                              key={course.id}
-                              value={course.id}
-                              className="font-bold"
-                            >
-                              {course.name} ({course.duration}분)
-                            </SelectItem>
-                          ))}
+                        {courses.map((course) => (
+                          <SelectItem
+                            key={course.id}
+                            value={course.id}
+                            className="font-bold"
+                          >
+                            {course.name} ({course.duration}분){" "}
+                            {!course.isActive && "(숨김)"}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -265,7 +278,7 @@ export function SaleRegistrationDialog({
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger className="h-12 rounded-xl border-zinc-200 dark:border-zinc-800 font-bold focus:ring-emerald-500">
+                          <SelectTrigger className="h-12 rounded-xl border-zinc-200 dark:border-zinc-800 font-bold focus:ring-blue-500">
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
@@ -300,7 +313,7 @@ export function SaleRegistrationDialog({
                       <FormControl>
                         <Input
                           type="number"
-                          className="h-12 rounded-xl border-zinc-200 dark:border-zinc-800 font-bold focus-visible:ring-emerald-500"
+                          className="h-12 rounded-xl border-zinc-200 dark:border-zinc-800 font-bold focus-visible:ring-blue-500"
                           {...field}
                           onChange={(e) =>
                             field.onChange(Number(e.target.value))
@@ -364,7 +377,7 @@ export function SaleRegistrationDialog({
                               <Checkbox
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
-                                className="size-5 rounded-md border-zinc-300 dark:border-zinc-700 data-[state=checked]:bg-emerald-600"
+                                className="size-5 rounded-md border-zinc-300 dark:border-zinc-700 data-[state=checked]:bg-blue-600"
                               />
                             </FormControl>
                             <FormLabel className="text-xs font-bold text-zinc-500 cursor-pointer">
@@ -383,12 +396,12 @@ export function SaleRegistrationDialog({
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black h-14 rounded-2xl text-lg shadow-xl shadow-emerald-200 dark:shadow-none transition-all active:scale-[0.98]"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black h-14 rounded-2xl text-lg shadow-xl shadow-blue-200 dark:shadow-none transition-all active:scale-[0.98]"
               >
                 {isLoading ? (
                   <Loader2 className="size-6 animate-spin" />
                 ) : (
-                  "매출 등록 완료"
+                  "매출 수정 완료"
                 )}
               </Button>
             </DialogFooter>

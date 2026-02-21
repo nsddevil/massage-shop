@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { CreateSaleInput } from "@/types";
+import { CreateSaleInput, UpdateSaleInput } from "@/types";
 import { startOfDay, endOfDay } from "date-fns";
 
 /**
@@ -57,6 +57,7 @@ export async function createSale(data: CreateSaleInput) {
           courseId: data.courseId,
           payMethod: data.payMethod,
           totalPrice: data.totalPrice,
+          createdAt: data.createdAt,
         },
       });
 
@@ -89,6 +90,90 @@ export async function createSale(data: CreateSaleInput) {
   } catch (error) {
     console.error("Failed to create sale:", error);
     return { success: false, error: "매출 등록에 실패했습니다." };
+  }
+}
+
+export async function updateSale(data: UpdateSaleInput) {
+  try {
+    // 1. 코스 정보 조회
+    const course = await prisma.course.findUnique({
+      where: { id: data.courseId },
+    });
+
+    if (!course) {
+      return { success: false, error: "코스 정보를 찾을 수 없습니다." };
+    }
+
+    // 2. 트랜잭션 처리
+    const sale = await prisma.$transaction(async (tx) => {
+      // 2-1. 기존 매출 수정
+      const updatedSale = await tx.sale.update({
+        where: { id: data.id },
+        data: {
+          courseId: data.courseId,
+          payMethod: data.payMethod,
+          totalPrice: data.totalPrice,
+          createdAt: data.createdAt,
+        },
+      });
+
+      // 2-2. 기존 관리사 커미션 기록 삭제
+      await tx.saleTherapist.deleteMany({
+        where: { saleId: data.id },
+      });
+
+      // 2-3. 새 관리사별 커미션 기록 생성
+      for (const t of data.therapists) {
+        const { commissionAmount, choiceFee } = calculateCommission(
+          course.type,
+          course.duration,
+          data.totalPrice,
+          t.isChoice,
+        );
+
+        await tx.saleTherapist.create({
+          data: {
+            saleId: updatedSale.id,
+            employeeId: t.employeeId,
+            isChoice: t.isChoice,
+            commissionAmount,
+            choiceFee,
+          },
+        });
+      }
+
+      return updatedSale;
+    });
+
+    revalidatePath("/sales");
+    revalidatePath("/");
+    return { success: true, data: sale };
+  } catch (error) {
+    console.error("Failed to update sale:", error);
+    return { success: false, error: "매출 수정에 실패했습니다." };
+  }
+}
+
+export async function deleteSale(id: string) {
+  try {
+    await prisma.$transaction(async (tx) => {
+      // 1. 관리사 커미션 기록 삭제
+      await tx.saleTherapist.deleteMany({
+        where: { saleId: id },
+      });
+
+      // 2. 매출 삭제
+      await tx.sale.delete({
+        where: { id },
+      });
+    });
+
+    revalidatePath("/sales");
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete sale:", error);
+    return { success: false, error: "매출 삭제에 실패했습니다." };
   }
 }
 
