@@ -72,6 +72,21 @@ export function CommutePageClient({
     }
   };
 
+  const getRoleBadgeStyle = (role: string) => {
+    switch (role) {
+      case "OWNER":
+        return "bg-zinc-900 hover:bg-zinc-800 text-white border-zinc-900"; // 사장: 검정 (권위)
+      case "MANAGER":
+        return "bg-blue-600 hover:bg-blue-700 text-white border-blue-600"; // 실장: 파랑 (신뢰)
+      case "THERAPIST":
+        return "bg-rose-500 hover:bg-rose-600 text-white border-rose-500"; // 관리사: 분홍 (케어)
+      case "STAFF":
+        return "bg-slate-500 hover:bg-slate-600 text-white border-slate-500"; // 직원: 회색 (기본)
+      default:
+        return "bg-zinc-200 text-zinc-700 hover:bg-zinc-300";
+    }
+  };
+
   const handleCardClick = (emp: EmployeeStatus) => {
     setSelectedEmp(emp);
     setIsDialogOpen(true);
@@ -170,13 +185,19 @@ export function CommutePageClient({
                 </div>
 
                 {/* Info */}
-                <div className="text-center space-y-0.5">
+                <div className="text-center flex flex-col items-center gap-1">
                   <span className="text-lg font-black block leading-none">
                     {emp.name}
                   </span>
-                  <span className="text-xs font-bold uppercase text-zinc-400">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "px-2 py-0.5 text-xs font-bold border-0",
+                      getRoleBadgeStyle(emp.role),
+                    )}
+                  >
                     {getRoleLabel(emp.role)}
-                  </span>
+                  </Badge>
                 </div>
 
                 {/* Time Badge */}
@@ -210,21 +231,33 @@ export function CommutePageClient({
               {selectedEmp?.name.slice(0, 1)}
             </div>
             <div>
-              <DialogTitle className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
-                {selectedEmp?.name}
+              <DialogTitle className="flex flex-col items-center gap-2 text-2xl font-black text-zinc-900 dark:text-zinc-100">
+                <span>{selectedEmp?.name}</span>
+                {selectedEmp && (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "px-2 py-0.5 text-sm font-bold border-0",
+                      getRoleBadgeStyle(selectedEmp.role),
+                    )}
+                  >
+                    {getRoleLabel(selectedEmp.role)}
+                  </Badge>
+                )}
               </DialogTitle>
               <DialogDescription className="text-zinc-500 font-medium mt-1">
                 {selectedEmp?.status === "WORKING"
                   ? "현재 근무 중입니다. 퇴근하시겠습니까?"
                   : selectedEmp?.status === "DONE"
-                    ? "이미 퇴근 처리가 완료되었습니다."
+                    ? "오늘 업무를 마치셨습니다. 다시 출근하시겠습니까?"
                     : "안녕하세요! 출근하시겠습니까?"}
               </DialogDescription>
             </div>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
-            {selectedEmp?.status === "OFF" && (
+            {(selectedEmp?.status === "OFF" ||
+              selectedEmp?.status === "DONE") && (
               <Button
                 onClick={handleClockIn}
                 className="w-full h-16 text-lg font-bold bg-zinc-900 hover:bg-zinc-800 text-white rounded-2xl shadow-lg"
@@ -234,7 +267,10 @@ export function CommutePageClient({
                   "처리 중..."
                 ) : (
                   <>
-                    <LogIn className="mr-2" /> 출근하기
+                    <LogIn className="mr-2" />{" "}
+                    {selectedEmp?.status === "DONE"
+                      ? "다시 출근하기"
+                      : "출근하기"}
                   </>
                 )}
               </Button>
@@ -253,16 +289,6 @@ export function CommutePageClient({
                     <LogOut className="mr-2" /> 퇴근하기
                   </>
                 )}
-              </Button>
-            )}
-
-            {selectedEmp?.status === "DONE" && (
-              <Button
-                variant="outline"
-                className="w-full h-14 font-bold border-2 rounded-2xl"
-                onClick={() => setIsDialogOpen(false)}
-              >
-                닫기
               </Button>
             )}
 

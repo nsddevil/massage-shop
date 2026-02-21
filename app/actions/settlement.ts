@@ -1,20 +1,333 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { Role, ExtraPayment } from "@/generated/prisma";
+import {
+  startOfDay,
+  endOfDay,
+  differenceInCalendarDays,
+  addMonths,
+  subDays,
+  startOfMonth,
+  endOfMonth,
+} from "date-fns";
 import { revalidatePath } from "next/cache";
-import { startOfDay, endOfDay } from "date-fns";
+import {
+  SalaryCalculationResult,
+  SalaryCalculationDetail,
+  EmployeeSettlementRole,
+} from "@/types";
+import { Prisma } from "@prisma/client";
 
 /**
- * 특정 주간의 관리사별 정산 대상 데이터 가져오기
- * @param startDate 주간 시작일 (월요일)
- * @param endDate 주간 종료일 (일요일)
+ * 월급 정산 대상 직원 리스트 조회
+ */
+export async function getEmployeeListForSalary() {
+  try {
+    const employees = await prisma.employee.findMany({
+      where: {
+        resignedAt: null,
+      },
+      orderBy: { name: "asc" },
+    });
+
+    // 각 직원의 마지막 정산 내역 조회하여 다음 정산 시작일 제안용 데이터 포함
+    const employeesWithLastSettlement = await Promise.all(
+      employees.map(async (emp) => {
+        const lastSettlement = await prisma.settlement.findFirst({
+          where: { employeeId: emp.id, type: "SALARY" },
+          orderBy: { createdAt: "desc" },
+        });
+
+        return {
+          ...emp,
+          lastSettlementEnd: lastSettlement?.periodEnd || null,
+          lastSettlementAt: lastSettlement?.createdAt || null,
+        };
+      }),
+    );
+
+    return { success: true, data: employeesWithLastSettlement };
+  } catch (error) {
+    console.error("Failed to fetch employee list for salary:", error);
+    return { success: false, error: "직원 목록을 불러오는데 실패했습니다." };
+  }
+}
+
+/**
+ * 실시간 급여 계산 (프리뷰)
+ */
+export async function calculateSalaryAction(
+  employeeId: string,
+  startDate: Date,
+  endDate: Date,
+): Promise<{
+  success: boolean;
+  data?: SalaryCalculationResult;
+  error?: string;
+}> {
+  try {
+    const employee = await prisma.employee.findUnique({
+      where: { id: employeeId },
+    });
+
+    if (!employee) throw new Error("직원을 찾을 수 없습니다.");
+
+    const start = startOfDay(startDate);
+    const end = endOfDay(endDate);
+
+    // 1. 출퇴근 기록 조회
+    const attendances = await prisma.attendance.findMany({
+      where: {
+        employeeId,
+        date: { gte: start, lte: end },
+        clockOut: { not: null },
+      },
+    });
+
+    // 2. 추가 수당(보너스, 가불) 조회
+    const extras = await prisma.extraPayment.findMany({
+      where: {
+        employeeId,
+        date: { gte: start, lte: end },
+        isSettled: false,
+      },
+    });
+
+    const workedDays = attendances.length;
+    const totalWorkHours = attendances.reduce(
+      (sum, att) => sum + (att.workHours || 0),
+      0,
+    );
+    const periodTotalDays = differenceInCalendarDays(end, start) + 1;
+
+    let baseAmount = 0;
+    let mealAllowance = 0;
+    let bonusAmount = 0;
+    let advanceAmount = 0;
+    let roleType: EmployeeSettlementRole = "REGULAR";
+
+    // 보너스/가불 합산
+    extras.forEach((ex) => {
+      if (ex.type === "BONUS") bonusAmount += ex.amount;
+      if (ex.type === "ADVANCE") advanceAmount += ex.amount;
+    });
+
+    if (employee.role === "STAFF") {
+      roleType = "STAFF";
+      // 시급제: (시간 * 시급) + (일수 * 식대)
+      baseAmount = Math.floor(totalWorkHours * (employee.hourlyRate || 0));
+      mealAllowance = workedDays * (employee.mealAllowance || 0);
+    } else {
+      roleType = "REGULAR";
+      // 정규직: (기본급 / 기간총일수) * 실제근무일수
+      const dailyRate = (employee.baseSalary || 0) / periodTotalDays;
+      baseAmount = Math.floor(dailyRate * workedDays);
+    }
+
+    const totalAmount =
+      baseAmount + mealAllowance + bonusAmount - advanceAmount;
+
+    return {
+      success: true,
+      data: {
+        employee,
+        roleType,
+        period: {
+          start,
+          end,
+          totalDays: periodTotalDays,
+          workedDays,
+          totalWorkHours,
+        },
+        details: {
+          baseAmount,
+          mealAllowance,
+          bonusAmount,
+          advanceAmount,
+          totalAmount: Math.ceil(Math.max(0, totalAmount) / 100) * 100,
+        },
+        extraPayments: extras,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to calculate salary:", error);
+    return { success: false, error: "급여 계산에 실패했습니다." };
+  }
+}
+
+/**
+ * 월급 정산 확정 및 저장
+ */
+export async function confirmSalarySettlement(result: SalaryCalculationResult) {
+  try {
+    const { employee, period, details, extraPayments } = result;
+
+    await prisma.$transaction(async (tx) => {
+      // 1. 정산 기록 생성
+      await tx.settlement.create({
+        data: {
+          employeeId: employee.id,
+          type: "SALARY",
+          periodStart: period.start,
+          periodEnd: period.end,
+          totalDaysInPeriod: period.totalDays,
+          workedDays: period.workedDays,
+          totalAmount: details.totalAmount,
+          details: details as unknown as Prisma.InputJsonValue,
+        },
+      });
+
+      // 2. 포함된 추가 수당 정산 완료 처리
+      if (extraPayments.length > 0) {
+        await tx.extraPayment.updateMany({
+          where: { id: { in: extraPayments.map((p) => p.id) } },
+          data: { isSettled: true },
+        });
+      }
+    });
+
+    revalidatePath("/settlement/salary");
+    revalidatePath("/settlement/salary/history");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to confirm salary settlement:", error);
+    return { success: false, error: "정산 저장에 실패했습니다." };
+  }
+}
+
+/**
+ * 정산 내역 조회
+ */
+export async function getSalarySettlementHistory(
+  year?: number,
+  month?: number,
+) {
+  try {
+    const where: { type: string; periodEnd?: { gte: Date; lte: Date } } = {
+      type: "SALARY",
+    };
+
+    if (year && month) {
+      const start = startOfMonth(new Date(year, month - 1, 1));
+      const end = endOfMonth(new Date(year, month - 1, 1));
+      where.createdAt = { gte: start, lte: end };
+    }
+
+    const history = await prisma.settlement.findMany({
+      where,
+      include: {
+        employee: {
+          select: { id: true, name: true, role: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return { success: true, data: history };
+  } catch (error) {
+    console.error("Failed to fetch salary history:", error);
+    return { success: false, error: "정산 내역을 불러오는데 실패했습니다." };
+  }
+}
+
+/**
+ * 정산 현황 통계 조회
+ */
+export async function getSalarySettlementStats(year: number, month: number) {
+  try {
+    const start = startOfMonth(new Date(year, month - 1, 1));
+    const end = endOfMonth(new Date(year, month - 1, 1));
+
+    // 1. 이번 달 정산 완료 건수 (createdAt 기준)
+    const settledCount = await prisma.settlement.count({
+      where: {
+        type: "SALARY",
+        createdAt: { gte: start, lte: end },
+      },
+    });
+
+    // 2. 미지급 가불금 합계 (isSettled: false)
+    const unpaidAdvance = await prisma.extraPayment.aggregate({
+      where: {
+        type: "ADVANCE",
+        isSettled: false,
+      },
+      _sum: {
+        amount: true,
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        settledCount,
+        unpaidAdvanceAmount: unpaidAdvance._sum.amount || 0,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to fetch salary stats:", error);
+    return { success: false, error: "통계 정보를 불러오는데 실패했습니다." };
+  }
+}
+
+/**
+ * 정산 확정 (데이터 저장)
+ */
+export async function confirmSettlement(data: {
+  employeeId: string;
+  type: string;
+  periodStart: Date | string;
+  periodEnd: Date | string;
+  totalDaysInPeriod: number;
+  workedDays: number;
+  totalAmount: number;
+  details: SalaryCalculationDetail;
+  extraIds: string[];
+}) {
+  try {
+    const periodStart = new Date(data.periodStart);
+    const periodEnd = new Date(data.periodEnd);
+
+    await prisma.$transaction(async (tx) => {
+      await tx.settlement.create({
+        data: {
+          employeeId: data.employeeId,
+          type: data.type,
+          periodStart: periodStart,
+          periodEnd: periodEnd,
+          totalDaysInPeriod: data.totalDaysInPeriod,
+          workedDays: data.workedDays,
+          totalAmount: data.totalAmount,
+          details: data.details,
+        },
+      });
+
+      if (data.extraIds && data.extraIds.length > 0) {
+        await tx.extraPayment.updateMany({
+          where: { id: { in: data.extraIds } },
+          data: { isSettled: true },
+        });
+      }
+    });
+
+    revalidatePath("/settlement/monthly");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to confirm settlement:", error);
+    return { success: false, error: "정산 처리에 실패했습니다." };
+  }
+}
+
+/**
+ * 주간 정산 데이터 조회
  */
 export async function getWeeklySettlementData(startDate: Date, endDate: Date) {
   try {
     const start = startOfDay(startDate);
     const end = endOfDay(endDate);
 
-    // 1. 모든 관리사 목록 가져오기
+    // 1. 관리사(THERAPIST)만 조회 (실장은 주급 제외)
     const therapists = await prisma.employee.findMany({
       where: {
         role: "THERAPIST",
@@ -22,150 +335,127 @@ export async function getWeeklySettlementData(startDate: Date, endDate: Date) {
       },
     });
 
-    // 2. 해당 기간의 모든 SaleTherapist 기록 가져오기
-    const salesData = await prisma.saleTherapist.findMany({
-      where: {
-        createdAt: {
-          gte: start,
-          lte: end,
-        },
-      },
-      include: {
-        sale: {
-          include: {
-            course: true,
+    const items = await Promise.all(
+      therapists.map(async (therapist) => {
+        const commissions = await prisma.saleTherapist.findMany({
+          where: {
+            employeeId: therapist.id,
+            createdAt: { gte: start, lte: end },
           },
-        },
-      },
-    });
+          include: {
+            sale: { include: { course: true } },
+          },
+        });
 
-    // 3. 해당 기간의 추가 지급액 (가불/보너스) 가져오기
-    const extraPayments = await prisma.extraPayment.findMany({
-      where: {
-        date: {
-          gte: start,
-          lte: end,
-        },
-        isSettled: false,
-      },
-    });
+        // 주급에서는 보너스/가불금 제외 (월급에서 처리)
+        // 화면 표시용으로 조회는 할 수 있으나, 정산 금액에는 포함하지 않음
+        /* 
+        const extras = await prisma.extraPayment.findMany({
+          where: {
+            employeeId: therapist.id,
+            date: { gte: start, lte: end },
+            isSettled: false,
+          },
+        });
+        */
+        const extras: ExtraPayment[] = [];
 
-    // 4. 이미 완료된 정산 기록 확인
-    const existingSettlements = await prisma.settlement.findMany({
-      where: {
-        periodStart: start,
-        periodEnd: end,
-        type: "WEEKLY",
-      },
-    });
+        const salesCount = commissions.length;
+        const totalCommission = commissions.reduce(
+          (sum, c) => sum + c.commissionAmount,
+          0,
+        );
+        const totalChoiceFee = commissions.reduce(
+          (sum, c) => sum + c.choiceFee,
+          0,
+        );
 
-    // 데이터 가공: 관리사별로 묶기
-    const settlementList = therapists.map((t) => {
-      const mySales = salesData.filter((s) => s.employeeId === t.id);
-      const myExtras = extraPayments.filter((e) => e.employeeId === t.id);
-      const isAlreadySettled = existingSettlements.some(
-        (s) => s.employeeId === t.id,
-      );
+        // 보너스/가불금 0 처리
+        const totalBonus = 0;
+        const totalAdvance = 0;
 
-      const totalCommission = mySales.reduce(
-        (sum, s) => sum + s.commissionAmount,
-        0,
-      );
-      const totalChoiceFee = mySales.reduce((sum, s) => sum + s.choiceFee, 0);
+        // 주급 = 커미션 + 지명수당
+        const netAmount = totalCommission + totalChoiceFee;
 
-      const totalBonus = myExtras
-        .filter((e) => e.type === "BONUS")
-        .reduce((sum, e) => sum + e.amount, 0);
-      const totalAdvance = myExtras
-        .filter((e) => e.type === "ADVANCE")
-        .reduce((sum, e) => sum + e.amount, 0);
+        const existingSettlement = await prisma.settlement.findFirst({
+          where: {
+            employeeId: therapist.id,
+            type: "WEEKLY",
+            periodStart: { gte: start },
+            periodEnd: { lte: end },
+          },
+        });
 
-      const netAmount =
-        totalCommission + totalChoiceFee + totalBonus - totalAdvance;
+        return {
+          therapist: { id: therapist.id, name: therapist.name },
+          salesCount,
+          totalCommission,
+          totalChoiceFee,
+          totalBonus,
+          totalAdvance,
+          netAmount,
+          isAlreadySettled: !!existingSettlement,
+          details: {
+            sales: commissions.map((c) => ({
+              id: c.sale.id,
+              date: c.createdAt,
+              courseName: c.sale.course.name,
+              amount: c.commissionAmount + c.choiceFee,
+            })),
+            extras: [], // 주급 명세서에는 추가 수당 표시 안 함
+          },
+        };
+      }),
+    );
 
-      return {
-        therapist: {
-          id: t.id,
-          name: t.name,
-        },
-        salesCount: mySales.length,
-        totalCommission,
-        totalChoiceFee,
-        totalBonus,
-        totalAdvance,
-        netAmount,
-        isAlreadySettled,
-        details: {
-          sales: mySales.map((s) => ({
-            id: s.id,
-            date: s.createdAt,
-            courseName: s.sale.course.name,
-            amount: s.commissionAmount + s.choiceFee,
-            isChoice: s.isChoice,
-          })),
-          extras: myExtras.map((e) => ({
-            id: e.id,
-            type: e.type,
-            amount: e.amount,
-            date: e.date,
-          })),
-        },
-      };
-    });
+    const activeItems = items.filter(
+      (item) => item.salesCount > 0 || item.isAlreadySettled,
+    );
 
-    return { success: true, data: settlementList };
+    return { success: true, data: activeItems };
   } catch (error) {
     console.error("Failed to fetch weekly settlement data:", error);
-    return { success: false, error: "정산 데이터를 불러오는데 실패했습니다." };
+    return { success: false, error: "데이터 조회 중 오류가 발생했습니다." };
   }
 }
 
 /**
- * 정산 기록 생성
+ * 주급 정산 생성
  */
 export async function createSettlement(data: {
   employeeId: string;
-  type: "WEEKLY" | "MONTHLY";
+  type: string;
   periodStart: Date;
   periodEnd: Date;
   totalAmount: number;
-  details: any;
+  details: SalaryCalculationDetail;
   extraPaymentIds: string[];
 }) {
   try {
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. 정산 레코드 생성
-      const settlement = await tx.settlement.create({
+    await prisma.$transaction(async (tx) => {
+      await tx.settlement.create({
         data: {
           employeeId: data.employeeId,
           type: data.type,
-          periodStart: startOfDay(data.periodStart),
-          periodEnd: endOfDay(data.periodEnd),
+          periodStart: data.periodStart,
+          periodEnd: data.periodEnd,
           totalAmount: data.totalAmount,
-          details: data.details as any,
+          details: data.details,
         },
       });
 
-      // 2. 포함된 가불금/보너스 항목 정산 완료 처리
       if (data.extraPaymentIds.length > 0) {
         await tx.extraPayment.updateMany({
-          where: {
-            id: { in: data.extraPaymentIds },
-          },
-          data: {
-            isSettled: true,
-          },
+          where: { id: { in: data.extraPaymentIds } },
+          data: { isSettled: true },
         });
       }
-
-      return settlement;
     });
 
     revalidatePath("/settlement/weekly");
-    revalidatePath("/finance");
-    return { success: true, data: result };
+    return { success: true };
   } catch (error) {
-    console.error("Failed to create settlement:", error);
-    return { success: false, error: "정산 처리에 실패했습니다." };
+    console.error("Failed to create weekly settlement:", error);
+    return { success: false, error: "정산 생성에 실패했습니다." };
   }
 }

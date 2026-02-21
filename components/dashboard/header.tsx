@@ -111,15 +111,6 @@ export function Header() {
           </Popover>
         </div>
 
-        {/* Search - Responsive Width */}
-        <div className="relative w-40 md:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-400" />
-          <Input
-            placeholder="거래 내역 검색..."
-            className="pl-10 h-10 bg-zinc-50 dark:bg-zinc-900 border-none ring-1 ring-zinc-200 dark:ring-zinc-800 focus-visible:ring-blue-500/50"
-          />
-        </div>
-
         {/* Notifications & Profile */}
         <div className="flex items-center gap-3">
           <Button

@@ -152,3 +152,36 @@ export async function getRecentSales(limit: number = 20) {
     };
   }
 }
+
+export async function getDailySales(date: Date = new Date()) {
+  try {
+    const start = startOfDay(date);
+    const end = endOfDay(date);
+
+    const sales = await prisma.sale.findMany({
+      where: {
+        createdAt: {
+          gte: start,
+          lte: end,
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      include: {
+        course: true,
+        therapists: {
+          include: {
+            employee: true,
+          },
+        },
+      },
+    });
+
+    return { success: true, data: sales };
+  } catch (error) {
+    console.error("Failed to fetch daily sales:", error);
+    return {
+      success: false,
+      error: "일별 매출 목록을 불러오는데 실패했습니다.",
+    };
+  }
+}

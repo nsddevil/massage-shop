@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -137,19 +138,40 @@ export function CommuteHistoryClient() {
     }
   };
 
-  const getRoleLabel = (role: string) => {
+  // CommuteHistoryClient.tsx
+
+  // Role Badge Helper Component
+  const RoleBadge = ({ role }: { role: string }) => {
+    let style = "bg-zinc-200 text-zinc-700 hover:bg-zinc-300";
+    let label = role;
+
     switch (role) {
       case "OWNER":
-        return "사장";
+        style = "bg-zinc-900 hover:bg-zinc-800 text-white border-zinc-900";
+        label = "사장";
+        break;
       case "MANAGER":
-        return "실장";
+        style = "bg-blue-600 hover:bg-blue-700 text-white border-blue-600";
+        label = "실장";
+        break;
       case "THERAPIST":
-        return "관리사";
+        style = "bg-rose-500 hover:bg-rose-600 text-white border-rose-500";
+        label = "관리사";
+        break;
       case "STAFF":
-        return "직원";
-      default:
-        return role;
+        style = "bg-slate-500 hover:bg-slate-600 text-white border-slate-500";
+        label = "직원";
+        break;
     }
+
+    return (
+      <Badge
+        variant="outline"
+        className={cn("text-xs font-bold px-2 py-0.5 border-0", style)}
+      >
+        {label}
+      </Badge>
+    );
   };
 
   return (
@@ -223,9 +245,7 @@ export function CommuteHistoryClient() {
                         {record.employee.name}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-xs">
-                          {getRoleLabel(record.employee.role)}
-                        </Badge>
+                        <RoleBadge role={record.employee.role} />
                       </TableCell>
                       <TableCell className="text-emerald-700 font-medium">
                         {format(new Date(record.clockIn), "HH:mm")}
@@ -279,9 +299,7 @@ export function CommuteHistoryClient() {
                           <span className="font-bold text-lg text-zinc-900 dark:text-zinc-100">
                             {record.employee.name}
                           </span>
-                          <Badge variant="outline" className="text-xs">
-                            {getRoleLabel(record.employee.role)}
-                          </Badge>
+                          <RoleBadge role={record.employee.role} />
                         </div>
                         <div className="text-sm text-zinc-500 flex items-center gap-1">
                           <CalendarIcon className="size-3" />

@@ -262,9 +262,7 @@ export function CourseTable({ courses }: CourseTableProps) {
                         <span className="font-bold text-zinc-900 dark:text-zinc-100">
                           {course.name}
                         </span>
-                        <span className="text-[10px] text-zinc-400 font-medium tracking-tight">
-                          ID: {course.id.slice(0, 8)}
-                        </span>
+                        {/* ID hidden */}
                       </div>
                     </TableCell>
                     <TableCell>

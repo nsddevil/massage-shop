@@ -1,13 +1,17 @@
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { SalesPageClient } from "./SalesPageClient";
-import { getRecentSales, getDailySummary } from "@/app/actions/sales";
+import {
+  getRecentSales,
+  getDailySummary,
+  getDailySales,
+} from "@/app/actions/sales";
 import { getCourses } from "@/app/actions/course";
 import { getEmployees } from "@/app/actions/staff";
 
 export default async function SalesPage() {
-  const [recentSalesRes, summaryRes, coursesRes, employeesRes] =
+  const [dailySalesRes, summaryRes, coursesRes, employeesRes] =
     await Promise.all([
-      getRecentSales(),
+      getDailySales(),
       getDailySummary(),
       getCourses(),
       getEmployees(),
@@ -21,7 +25,7 @@ export default async function SalesPage() {
       </aside>
 
       <SalesPageClient
-        initialSales={recentSalesRes.success ? recentSalesRes.data : []}
+        initialSales={dailySalesRes.success ? dailySalesRes.data : []}
         initialSummary={summaryRes.success ? summaryRes.data : null}
         courses={coursesRes.success ? coursesRes.data : []}
         employees={employeesRes.success ? employeesRes.data : []}

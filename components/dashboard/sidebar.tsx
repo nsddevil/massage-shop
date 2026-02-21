@@ -29,7 +29,7 @@ const menuItems = [
   { name: "일별매출", icon: ReceiptText, href: "/sales" },
   { name: "월별 경영분석", icon: BarChart3, href: "/finance" },
   { name: "주급정산", icon: Coins, href: "/settlement/weekly" },
-  { name: "월급정산", icon: Wallet, href: "/settlement/monthly" },
+  { name: "월급정산", icon: Wallet, href: "/settlement/salary" },
   { name: "지출관리", icon: TrendingDown, href: "/expenses" },
   { name: "출퇴근관리", icon: Clock, href: "/attendance" },
   { name: "근태기록", icon: History, href: "/attendance/history" },
@@ -98,12 +98,6 @@ export function Sidebar() {
           </Link>
         </div>
       </ScrollArea>
-
-      <div className="p-4 mt-auto border-t border-zinc-100 dark:border-zinc-800">
-        <Button className="w-full justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md shadow-blue-200 dark:shadow-none transition-all py-6 rounded-xl">
-          <PlusCircle className="size-5" />새 매출 등록
-        </Button>
-      </div>
     </div>
   );
 }

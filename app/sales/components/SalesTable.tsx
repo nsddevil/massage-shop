@@ -57,7 +57,7 @@ export function SalesTable({ sales }: SalesTableProps) {
                         {PAY_METHOD_LABELS[sale.payMethod]}
                       </Badge>
                       <span className="text-[10px] text-zinc-400 font-medium">
-                        {format(new Date(sale.createdAt), "HH:mm", {
+                        {format(new Date(sale.createdAt), "MM.dd HH:mm", {
                           locale: ko,
                         })}
                       </span>
@@ -110,7 +110,7 @@ export function SalesTable({ sales }: SalesTableProps) {
             <TableHeader>
               <TableRow className="bg-zinc-50/50 dark:bg-zinc-900/30 border-y border-zinc-100 dark:border-zinc-800">
                 <TableHead className="font-bold text-zinc-400 uppercase text-[10px] pl-6 h-12">
-                  시간
+                  일시
                 </TableHead>
                 <TableHead className="font-bold text-zinc-400 uppercase text-[10px] h-12">
                   코스명
@@ -142,7 +142,7 @@ export function SalesTable({ sales }: SalesTableProps) {
                     className="border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 transition-colors"
                   >
                     <TableCell className="pl-6 py-4 font-medium text-zinc-400 text-xs">
-                      {format(new Date(sale.createdAt), "HH:mm", {
+                      {format(new Date(sale.createdAt), "MM.dd HH:mm", {
                         locale: ko,
                       })}
                     </TableCell>

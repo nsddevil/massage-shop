@@ -22,12 +22,13 @@ enum Role {
 }
 
 model Employee {
-  id         String    @id @default(cuid()) // String + cuid 적용
-  name       String
-  phone      String?
-  role       Role
-  joinedAt   DateTime
-  resignedAt DateTime?
+  id          String    @id @default(cuid()) // String + cuid 적용
+  name        String
+  phone       String?
+  role        Role
+  joinedAt    DateTime
+  resignedAt  DateTime?
+  payStartDay Int       @default(1) // 급여 산정 시작일
 
   baseSalary    Int? @default(0)
   hourlyRate    Int? @default(0)
