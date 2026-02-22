@@ -214,7 +214,7 @@ export async function getSalarySettlementHistory(
       where,
       include: {
         employee: {
-          select: { id: true; name: true; role: true },
+          select: { id: true, name: true, role: true },
         },
       },
       orderBy: { createdAt: "desc" },
