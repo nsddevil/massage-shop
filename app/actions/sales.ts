@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { CreateSaleInput, UpdateSaleInput } from "@/types";
-import { startOfDay, endOfDay } from "date-fns";
+import { kst } from "@/lib/date";
 
 /**
  * 커미션 계산 로직
@@ -179,10 +179,10 @@ export async function deleteSale(id: string) {
   }
 }
 
-export async function getDailySummary(date: Date = new Date()) {
+export async function getDailySummary(date: Date = kst.nowKST()) {
   try {
-    const start = startOfDay(date);
-    const end = endOfDay(date);
+    const start = kst.startOfDay(date);
+    const end = kst.endOfDay(date);
 
     const sales = await prisma.sale.findMany({
       where: {
@@ -240,10 +240,10 @@ export async function getRecentSales(limit: number = 20) {
   }
 }
 
-export async function getDailySales(date: Date = new Date()) {
+export async function getDailySales(date: Date = kst.nowKST()) {
   try {
-    const start = startOfDay(date);
-    const end = endOfDay(date);
+    const start = kst.startOfDay(date);
+    const end = kst.endOfDay(date);
 
     const sales = await prisma.sale.findMany({
       where: {

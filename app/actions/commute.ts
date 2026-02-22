@@ -22,7 +22,7 @@ function getBusinessDate(date: Date = kst.nowKST()) {
  */
 export async function clockIn(employeeId: string) {
   try {
-    const now = getKSTDate();
+    const now = kst.nowKST();
     const businessDate = getBusinessDate(now);
 
     // 이미 출근 중인지 확인 (아직 퇴근 안 한 기록이 있는지)
@@ -59,7 +59,7 @@ export async function clockIn(employeeId: string) {
  */
 export async function clockOut(employeeId: string) {
   try {
-    const now = getKSTDate();
+    const now = kst.nowKST();
 
     // 가장 최근의 미종료 출근 기록 찾기
     const attendance = await prisma.attendance.findFirst({
@@ -102,7 +102,7 @@ export async function clockOut(employeeId: string) {
  */
 export async function getTodayCommuteStatus() {
   try {
-    const now = getKSTDate();
+    const now = kst.nowKST();
     const businessDate = getBusinessDate(now);
 
     // 1. 전체 직원 목록 (퇴직자 제외)
