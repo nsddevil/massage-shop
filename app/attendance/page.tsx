@@ -1,10 +1,13 @@
-export const dynamic = "force-dynamic";
-
+import { Sidebar } from "@/components/dashboard/sidebar";
 import { CommutePageClient } from "./CommutePageClient";
 import { getTodayCommuteStatus } from "@/app/actions/commute";
-import { Sidebar } from "@/components/dashboard/sidebar";
+import { unstable_noStore as noStore } from "next/cache";
+
+export const dynamic = "force-dynamic";
 
 export default async function CommutePage() {
+  noStore();
+  const now = new Date();
   const { data, businessDate } = await getTodayCommuteStatus();
 
   return (
@@ -16,7 +19,8 @@ export default async function CommutePage() {
 
       <CommutePageClient
         initialData={data || []}
-        businessDate={businessDate || new Date()}
+        businessDate={businessDate || now}
+        initialDate={now.toISOString()}
       />
     </div>
   );

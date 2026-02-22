@@ -26,11 +26,13 @@ interface SalarySettlementClientProps {
     settledCount: number;
     unpaidAdvanceAmount: number;
   };
+  initialDate?: string;
 }
 
 export function SalarySettlementClient({
   employees,
   stats,
+  initialDate,
 }: SalarySettlementClientProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);

@@ -59,11 +59,15 @@ export interface SettlementItem {
 
 export function WeeklySettlementClient({
   initialData,
+  initialDate,
 }: {
   initialData: SettlementItem[];
+  initialDate?: string;
 }) {
   const [mounted, setMounted] = useState(false);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(
+    initialDate ? new Date(initialDate) : new Date(),
+  );
   const [data, setData] = useState<SettlementItem[]>(initialData);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);

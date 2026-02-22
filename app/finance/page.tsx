@@ -3,8 +3,10 @@ export const dynamic = "force-dynamic";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { FinancePageClient } from "./FinancePageClient";
 import { getMonthlyFinance } from "@/app/actions/finance";
+import { unstable_noStore as noStore } from "next/cache";
 
 export default async function FinancePage() {
+  noStore();
   const now = new Date();
   const financeRes = await getMonthlyFinance(
     now.getFullYear(),
@@ -37,6 +39,7 @@ export default async function FinancePage() {
                 chartData: [],
               }
         }
+        initialDate={now.toISOString()}
       />
     </div>
   );

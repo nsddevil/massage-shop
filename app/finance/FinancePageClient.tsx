@@ -38,11 +38,15 @@ export interface FinanceData {
 
 export function FinancePageClient({
   initialData,
+  initialDate,
 }: {
   initialData: FinanceData;
+  initialDate?: string;
 }) {
   const [mounted, setMounted] = useState(false);
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(
+    initialDate ? new Date(initialDate) : new Date(),
+  );
   const [data, setData] = useState<FinanceData>(initialData);
   const [isLoading, setIsLoading] = useState(false);
 

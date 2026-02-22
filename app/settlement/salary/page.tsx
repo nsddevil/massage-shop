@@ -6,8 +6,10 @@ import {
   getEmployeeListForSalary,
   getSalarySettlementStats,
 } from "@/app/actions/settlement";
+import { unstable_noStore as noStore } from "next/cache";
 
 export default async function SalarySettlementPage() {
+  noStore();
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
@@ -31,6 +33,7 @@ export default async function SalarySettlementPage() {
       <SalarySettlementClient
         employees={employees || []}
         stats={stats || { settledCount: 0, unpaidAdvanceAmount: 0 }}
+        initialDate={now.toISOString()}
       />
     </div>
   );

@@ -2,10 +2,12 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { WeeklySettlementClient } from "./WeeklySettlementClient";
 import { getWeeklySettlementData } from "@/app/actions/settlement";
 import { startOfWeek, endOfWeek } from "date-fns";
+import { unstable_noStore as noStore } from "next/cache";
 
 export const dynamic = "force-dynamic";
 
 export default async function WeeklySettlementPage() {
+  noStore();
   const now = new Date();
   // 월요일~일요일 범위
   const start = startOfWeek(now, { weekStartsOn: 1 });
@@ -22,6 +24,7 @@ export default async function WeeklySettlementPage() {
 
       <WeeklySettlementClient
         initialData={settlementRes.success ? settlementRes.data || [] : []}
+        initialDate={now.toISOString()}
       />
     </div>
   );
