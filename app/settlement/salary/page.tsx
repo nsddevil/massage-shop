@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { SalarySettlementClient } from "./SalarySettlementClient";
 import {

@@ -3,6 +3,8 @@ import { WeeklySettlementClient } from "./WeeklySettlementClient";
 import { getWeeklySettlementData } from "@/app/actions/settlement";
 import { startOfWeek, endOfWeek } from "date-fns";
 
+export const dynamic = "force-dynamic";
+
 export default async function WeeklySettlementPage() {
   const now = new Date();
   // 월요일~일요일 범위

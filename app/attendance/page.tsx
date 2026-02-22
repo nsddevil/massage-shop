@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { CommutePageClient } from "./CommutePageClient";
 import { getTodayCommuteStatus } from "@/app/actions/commute";
 import { Sidebar } from "@/components/dashboard/sidebar";
