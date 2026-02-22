@@ -77,6 +77,7 @@ export async function createSale(data: CreateSaleInput) {
             isChoice: t.isChoice,
             commissionAmount,
             choiceFee,
+            createdAt: data.createdAt,
           },
         });
       }
@@ -138,6 +139,7 @@ export async function updateSale(data: UpdateSaleInput) {
             isChoice: t.isChoice,
             commissionAmount,
             choiceFee,
+            createdAt: data.createdAt,
           },
         });
       }

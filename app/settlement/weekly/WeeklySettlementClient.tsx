@@ -38,8 +38,19 @@ export interface SettlementItem {
   netAmount: number;
   isAlreadySettled: boolean;
   details: {
-    sales: any[];
-    extras: any[];
+    sales: {
+      id: string;
+      date: Date | string;
+      courseName: string;
+      amount: number;
+      isChoice?: boolean;
+    }[];
+    extras: {
+      id: string;
+      date: Date | string;
+      type: string;
+      amount: number;
+    }[];
   };
 }
 
@@ -222,38 +233,38 @@ export function WeeklySettlementClient({
                           </div>
                         </div>
 
-                        <div className="flex-1 p-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
-                          <div className="flex flex-col justify-center gap-1 p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
-                            <p className="text-xs font-bold text-zinc-500 uppercase flex items-center gap-1.5 mb-1">
+                        <div className="flex-1 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4">
+                          <div className="flex flex-col justify-center gap-1 p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
+                            <p className="text-xs font-bold text-zinc-500 uppercase flex items-center gap-1.5 mb-1 shrink-0">
                               <Clock className="size-3.5" /> 수행 코스
                             </p>
                             <div className="flex items-baseline gap-1">
-                              <span className="text-xl font-black text-zinc-900 dark:text-zinc-100">
+                              <span className="text-lg font-black text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
                                 {item.salesCount}
                               </span>
-                              <span className="text-xs font-medium text-zinc-500">
+                              <span className="text-xs font-medium text-zinc-500 shrink-0">
                                 건
                               </span>
                             </div>
-                            <p className="text-xs font-medium text-zinc-500 mt-1">
+                            <p className="text-xs font-medium text-zinc-500 mt-1 whitespace-nowrap tracking-tighter">
                               ₩{item.totalCommission.toLocaleString()}
                             </p>
                           </div>
 
-                          <div className="flex flex-col justify-center gap-1 p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100/50 dark:border-emerald-900/30">
-                            <p className="text-xs font-bold text-emerald-600/80 dark:text-emerald-400/80 uppercase flex items-center gap-1.5 mb-1">
-                              <Plus className="size-3.5" /> 초이스 수당
+                          <div className="flex flex-col justify-center gap-1 p-3 rounded-2xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100/50 dark:border-emerald-900/30">
+                            <p className="text-xs font-bold text-emerald-600/80 dark:text-emerald-400/80 uppercase flex items-center gap-1.5 mb-1 shrink-0">
+                              <Plus className="size-3.5" /> 초이스
                             </p>
-                            <p className="text-xl font-black text-emerald-600 dark:text-emerald-500">
+                            <p className="text-base font-black text-emerald-600 dark:text-emerald-500 whitespace-nowrap tracking-tighter">
                               + ₩{item.totalChoiceFee.toLocaleString()}
                             </p>
                           </div>
 
-                          <div className="flex flex-col justify-center gap-1 p-4 rounded-2xl bg-red-50/50 dark:bg-red-900/10 border border-red-100/50 dark:border-red-900/30">
-                            <p className="text-xs font-bold text-red-600/80 dark:text-red-400/80 uppercase flex items-center gap-1.5 mb-1">
+                          <div className="flex flex-col justify-center gap-1 p-3 rounded-2xl bg-red-50/50 dark:bg-red-900/10 border border-red-100/50 dark:border-red-900/30">
+                            <p className="text-xs font-bold text-red-600/80 dark:text-red-400/80 uppercase flex items-center gap-1.5 mb-1 shrink-0 whitespace-nowrap">
                               <Minus className="size-3.5" /> 가불/보너스
                             </p>
-                            <p className="text-xl font-black text-red-600 dark:text-red-500">
+                            <p className="text-base font-black text-red-600 dark:text-red-500 whitespace-nowrap tracking-tighter">
                               {item.totalBonus - item.totalAdvance >= 0
                                 ? "+"
                                 : ""}
@@ -262,21 +273,21 @@ export function WeeklySettlementClient({
                                 item.totalBonus - item.totalAdvance
                               ).toLocaleString()}
                             </p>
-                            <div className="flex gap-2 mt-1">
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 whitespace-nowrap">
                                 B: {item.totalBonus.toLocaleString()}
                               </span>
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 whitespace-nowrap">
                                 A: {item.totalAdvance.toLocaleString()}
                               </span>
                             </div>
                           </div>
 
-                          <div className="flex flex-col justify-center gap-1 p-4 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
-                            <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase mb-1">
+                          <div className="flex flex-col justify-center gap-1 p-3 rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
+                            <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase mb-1 shrink-0">
                               최종 지급액
                             </p>
-                            <p className="text-2xl font-black text-blue-600 dark:text-blue-400 tracking-tight">
+                            <p className="text-lg lg:text-xl font-black text-blue-600 dark:text-blue-400 whitespace-nowrap tracking-tighter">
                               ₩{item.netAmount.toLocaleString()}
                             </p>
                           </div>

@@ -345,7 +345,9 @@ export async function getWeeklySettlementData(startDate: Date, endDate: Date) {
         const commissions = await prisma.saleTherapist.findMany({
           where: {
             employeeId: therapist.id,
-            createdAt: { gte: start, lte: end },
+            sale: {
+              createdAt: { gte: start, lte: end },
+            },
           },
           include: {
             sale: { include: { course: true } },
@@ -403,7 +405,7 @@ export async function getWeeklySettlementData(startDate: Date, endDate: Date) {
           details: {
             sales: commissions.map((c) => ({
               id: c.sale.id,
-              date: c.createdAt,
+              date: c.sale.createdAt,
               courseName: c.sale.course.name,
               amount: c.commissionAmount + c.choiceFee,
             })),

@@ -6,7 +6,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +28,7 @@ export function SettlementDetailDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl w-[95vw] rounded-3xl p-0 overflow-hidden border-none shadow-2xl max-h-[90dvh] flex flex-col [&>button]:text-zinc-500 dark:[&>button]:text-white bg-white dark:bg-zinc-900">
-        <DialogHeader className="p-6 bg-zinc-900">
+        <DialogHeader className="p-6 bg-zinc-900 shrink-0">
           <DialogTitle className="text-xl font-black text-white flex items-center gap-3">
             <span className="text-emerald-400 font-black">
               {data.therapist.name}
@@ -43,7 +42,7 @@ export function SettlementDetailDialog({
           </p>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 p-6">
+        <div className="flex-1 overflow-y-auto p-6 min-h-0">
           <div className="space-y-8">
             {/* Sales List */}
             <section className="space-y-4">
@@ -122,9 +121,9 @@ export function SettlementDetailDialog({
               )}
             </section>
           </div>
-        </ScrollArea>
+        </div>
 
-        <div className="p-6 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
+        <div className="p-6 bg-zinc-50 dark:bg-zinc-900/50 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center shrink-0">
           <div className="flex flex-col">
             <span className="text-[11px] font-bold text-zinc-400 uppercase">
               정산 합계
