@@ -16,21 +16,52 @@ import {
   MinusCircle,
   Equal,
   Info,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { deleteSettlement } from "@/app/actions/settlement";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useState } from "react";
 
 interface HistoryDetailDialogProps {
   item: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDeleteSuccess?: () => void;
 }
 
 export function HistoryDetailDialog({
   item,
   open,
   onOpenChange,
+  onDeleteSuccess,
 }: HistoryDetailDialogProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
   if (!item) return null;
+
+  const handleDelete = async () => {
+    if (
+      !confirm(
+        "정말 이 정산 내역을 삭제하시겠습니까? 관련 가불금 등이 미정산 상태로 복구됩니다.",
+      )
+    ) {
+      return;
+    }
+
+    setIsDeleting(true);
+    const result = await deleteSettlement(item.id);
+    setIsDeleting(false);
+
+    if (result.success) {
+      toast.success("정산 내역이 삭제되었습니다.");
+      onOpenChange(false);
+      onDeleteSuccess?.();
+    } else {
+      toast.error(result.error || "삭제에 실패했습니다.");
+    }
+  };
 
   const details = item.details as any;
 
@@ -62,6 +93,20 @@ export function HistoryDetailDialog({
           <p className="text-zinc-400 font-medium">
             정산일에 수행된 계산 상세 항목을 보여줍니다.
           </p>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="absolute top-8 right-12 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors"
+          >
+            {isDeleting ? (
+              <Loader2 className="size-5 animate-spin" />
+            ) : (
+              <Trash2 className="size-5" />
+            )}
+          </Button>
         </ShadcnDialogHeader>
 
         <div className="p-8 space-y-8 overflow-y-auto max-h-[70vh]">

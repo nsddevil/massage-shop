@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 import { revalidatePath } from "next/cache";
 import { subDays, differenceInMinutes } from "date-fns";
 import { kst } from "@/lib/date";
@@ -10,12 +11,17 @@ import { kst } from "@/lib/date";
  * - 기준: 새벽 06:00 이전이면 전날을 영업일로 간주
  */
 function getBusinessDate(date: Date = kst.nowKST()) {
-  const hours = date.getHours();
+  // KST 기준 시 추출
+  const kstTime = new Date(date.getTime() + KST_OFFSET);
+  const hours = kstTime.getUTCHours();
+
   if (hours < 6) {
-    return kst.startOfDay(subDays(date, 1));
+    return kst.toDateOnly(subDays(date, 1));
   }
-  return kst.startOfDay(date);
+  return kst.toDateOnly(date);
 }
+
+const KST_OFFSET = 9 * 60 * 60 * 1000;
 
 /**
  * 출근 처리
@@ -186,10 +192,10 @@ export async function getCommuteHistory(
   employeeId?: string,
 ) {
   try {
-    const whereClause: any = {
+    const whereClause: Prisma.AttendanceWhereInput = {
       date: {
-        gte: kst.startOfDay(startDate),
-        lte: kst.endOfDay(endDate),
+        gte: kst.toDateOnly(startDate),
+        lte: kst.toDateOnly(endDate),
       },
     };
 
@@ -224,25 +230,34 @@ export async function getCommuteHistory(
  */
 export async function updateCommuteRecord(
   id: string,
-  data: { clockIn: Date; clockOut: Date | null },
+  data: { clockIn: string; clockOut: string | null },
 ) {
   try {
+    // datetime-local 인풋은 "YYYY-MM-DDTHH:mm" 형식이며 브라우저의 로컬 시간을 따름.
+    // 이를 KST 시점으로 정확히 해석하기 위해 접미사 추가
+    const clockIn = new Date(data.clockIn + ":00+09:00");
+    const clockOut = data.clockOut
+      ? new Date(data.clockOut + ":00+09:00")
+      : null;
     let workHours = null;
 
-    if (data.clockOut) {
-      const minutesWorked = differenceInMinutes(data.clockOut, data.clockIn);
+    if (clockOut) {
+      const diffMs = clockOut.getTime() - clockIn.getTime();
+      const minutesWorked = Math.floor(diffMs / (1000 * 60));
       workHours = parseFloat((minutesWorked / 60).toFixed(2));
     }
 
     await prisma.attendance.update({
       where: { id },
       data: {
-        clockIn: data.clockIn,
-        clockOut: data.clockOut,
+        date: getBusinessDate(clockIn),
+        clockIn: clockIn,
+        clockOut: clockOut,
         workHours,
       },
     });
 
+    revalidatePath("/attendance");
     revalidatePath("/attendance/history");
     return { success: true };
   } catch (error) {

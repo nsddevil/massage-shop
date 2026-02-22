@@ -39,6 +39,8 @@ export function SalarySettlementClient({
 
   const getRoleBadge = (role: string) => {
     switch (role) {
+      case "OWNER":
+        return "사장";
       case "MANAGER":
         return "실장";
       case "THERAPIST":
@@ -198,7 +200,7 @@ export function SalarySettlementClient({
                         급여 조건
                       </p>
                       <p className="text-sm font-black text-zinc-700 dark:text-zinc-300">
-                        {emp.role === "STAFF"
+                        {emp.role === "STAFF" || emp.role === "OWNER"
                           ? `시급 ₩${emp.hourlyRate?.toLocaleString()}`
                           : `기본급 ₩${emp.baseSalary?.toLocaleString()}`}
                       </p>

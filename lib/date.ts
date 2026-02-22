@@ -18,14 +18,25 @@ export const kst = {
   nowKST: () => new Date(Date.now() + KST_OFFSET),
 
   startOfDay: (date: Date) => {
-    // 1. 입력 시간을 KST로 변환
+    // 1. 입력 시점의 KST 기준 연, 월, 일 추출
     const kstTime = new Date(date.getTime() + KST_OFFSET);
-    // 2. KST 기준의 연, 월, 일 추출
     const y = kstTime.getUTCFullYear();
     const m = kstTime.getUTCMonth();
     const d = kstTime.getUTCDate();
-    // 3. KST 00:00:00에 해당하는 UTC 시점 계산하여 반환
+    // 2. KST 00:00:00에 해당하는 UTC 시점 반환
     return new Date(Date.UTC(y, m, d) - KST_OFFSET);
+  },
+
+  /**
+   * Prisma의 @db.Date 필드(시각 정보 없음)에 저장하기 적합한 Date 객체를 반환합니다.
+   * KST 기준 날짜의 00:00 UTC 시점을 반환하여 시간대 혼선을 방지합니다.
+   */
+  toDateOnly: (date: Date) => {
+    const kstTime = new Date(date.getTime() + KST_OFFSET);
+    const y = kstTime.getUTCFullYear();
+    const m = kstTime.getUTCMonth();
+    const d = kstTime.getUTCDate();
+    return new Date(Date.UTC(y, m, d));
   },
 
   endOfDay: (date: Date) => {
@@ -74,6 +85,21 @@ export const kst = {
       .replace("MM", String(m).padStart(2, "0"))
       .replace("dd", String(d).padStart(2, "0"))
       .replace("HH", String(hh).padStart(2, "0"))
-      .replace("mm", String(mm).padStart(2, "0"));
+      .replace("mm", String(mm).padStart(2, "0"))
+      .replace("MM월", String(m) + "월") // 추가: MM월 dd일 지원
+      .replace("dd일", String(d).padStart(2, "0") + "일");
+  },
+
+  /**
+   * input type="datetime-local" 에 사용할 수 있는 KST 기준 포맷(YYYY-MM-DDTHH:mm)을 반환합니다.
+   */
+  toInputString: (date: Date) => {
+    const kstTime = new Date(date.getTime() + KST_OFFSET);
+    const y = kstTime.getUTCFullYear();
+    const m = String(kstTime.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(kstTime.getUTCDate()).padStart(2, "0");
+    const hh = String(kstTime.getUTCHours()).padStart(2, "0");
+    const mm = String(kstTime.getUTCMinutes()).padStart(2, "0");
+    return `${y}-${m}-${d}T${hh}:${mm}`;
   },
 };

@@ -309,6 +309,7 @@ export function SalaryHistoryClient({
         item={selectedItem}
         open={!!selectedItem}
         onOpenChange={(open) => !open && setSelectedItem(null)}
+        onDeleteSuccess={() => fetchHistory(year, month)}
       />
     </div>
   );

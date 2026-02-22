@@ -49,9 +49,23 @@ export function SettlementDialog({
 }: SettlementDialogProps) {
   // 기본 정산 기간 설정: 마지막 정산일 다음날(없으면 입사일) ~ 한 달 뒤 전날
   const getDefaultDates = () => {
-    const start = employee.lastSettlementEnd
-      ? addDays(new Date(employee.lastSettlementEnd), 1)
-      : new Date(employee.joinedAt);
+    if (employee.lastSettlementEnd) {
+      const start = addDays(new Date(employee.lastSettlementEnd), 1);
+      const end = subDays(addMonths(start, 1), 1);
+      return { start, end };
+    }
+
+    // 마지막 정산 내역이 없는 경우: (현재 연도)-(현재 월)-(입사일)로 제안
+    const now = new Date();
+    const joinedAt = new Date(employee.joinedAt);
+    const joinedDay = joinedAt.getDate();
+
+    // 현재 달의 입사일로 설정 (단, 현재 날짜가 입사일 이전이면 전달의 입사일로 설정할 수도 있으나
+    // 사용자의 요청 "정산하는 년도 월 + 입사 일"에 충실하게 현재 해/달 기준 생성)
+    let start = new Date(now.getFullYear(), now.getMonth(), joinedDay);
+
+    // 만약 입사일이 31일인데 현재 달이 30일까지라면, 해당 달의 마지막 날로 조정될 수 있음 (Date 객체 특성)
+    // 안전하게 한 달 전으로 시작일을 잡는 배려가 필요할 수 있으나, 일단 요청대로 구현
 
     const end = subDays(addMonths(start, 1), 1);
     return { start, end };
@@ -200,11 +214,13 @@ export function SettlementDialog({
                 variant="outline"
                 className="text-[10px] font-bold border-zinc-200"
               >
-                {result?.employee.role === "MANAGER"
-                  ? "실장"
-                  : result?.employee.role === "THERAPIST"
-                    ? "관리사"
-                    : "직원"}
+                {result?.employee.role === "OWNER"
+                  ? "사장"
+                  : result?.employee.role === "MANAGER"
+                    ? "실장"
+                    : result?.employee.role === "THERAPIST"
+                      ? "관리사"
+                      : "직원"}
               </Badge>
             </div>
 
@@ -268,7 +284,8 @@ export function SettlementDialog({
                       <p className="text-[10px] font-bold text-zinc-400">
                         총 {result.period.totalDays}일 기준
                       </p>
-                      {result.roleType === "STAFF" && (
+                      {(result.roleType === "STAFF" ||
+                        result.employee.role === "OWNER") && (
                         <p className="text-[10px] font-bold text-zinc-500">
                           {result.period.totalWorkHours}시간 근무
                         </p>

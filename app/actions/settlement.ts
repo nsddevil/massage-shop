@@ -109,8 +109,8 @@ export async function calculateSalaryAction(
       if (ex.type === "ADVANCE") advanceAmount += ex.amount;
     });
 
-    if (employee.role === "STAFF") {
-      roleType = "STAFF";
+    if (employee.role === "STAFF" || employee.role === "OWNER") {
+      roleType = employee.role === "STAFF" ? "STAFF" : "REGULAR";
       // 시급제: (시간 * 시급) + (일수 * 식대)
       baseAmount = Math.floor(totalWorkHours * (employee.hourlyRate || 0));
       mealAllowance = workedDays * (employee.mealAllowance || 0);
@@ -121,6 +121,9 @@ export async function calculateSalaryAction(
       baseAmount = Math.floor(dailyRate * workedDays);
     }
 
+    // RoleType 정비: 사장은 REGULAR로 취급하되 계산만 시급제로 할 수 있게 함
+    // (이후 UI에서 roleType 보다는 employee.role을 직접 쓰는게 정확함)
+
     const totalAmount =
       baseAmount + mealAllowance + bonusAmount - advanceAmount;
 
@@ -128,7 +131,9 @@ export async function calculateSalaryAction(
       success: true,
       data: {
         employee,
-        roleType,
+        roleType: (employee.role === "STAFF"
+          ? "STAFF"
+          : "REGULAR") as EmployeeSettlementRole,
         period: {
           start,
           end,
@@ -555,6 +560,8 @@ export async function deleteSettlement(id: string) {
 
     revalidatePath("/");
     revalidatePath("/finance");
+    revalidatePath("/settlement/salary");
+    revalidatePath("/settlement/monthly");
     revalidatePath("/settlement/weekly");
     revalidatePath("/settlement/salary/history");
 

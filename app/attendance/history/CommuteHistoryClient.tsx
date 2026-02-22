@@ -55,6 +55,7 @@ import {
 } from "@/app/actions/commute";
 import { getEmployees } from "@/app/actions/staff";
 import { Employee, ROLE_LABELS } from "@/types";
+import { kst } from "@/lib/date";
 
 interface CommuteRecord {
   id: string;
@@ -122,12 +123,10 @@ export function CommuteHistoryClient() {
 
   const handleEditClick = (record: CommuteRecord) => {
     setSelectedRecord(record);
-    // 날짜 인풋 포맷: YYYY-MM-DDTHH:mm
-    setEditClockIn(format(new Date(record.clockIn), "yyyy-MM-dd'T'HH:mm"));
+    // KST 기준 포맷 사용
+    setEditClockIn(kst.toInputString(new Date(record.clockIn)));
     setEditClockOut(
-      record.clockOut
-        ? format(new Date(record.clockOut), "yyyy-MM-dd'T'HH:mm")
-        : "",
+      record.clockOut ? kst.toInputString(new Date(record.clockOut)) : "",
     );
     setIsEditDialogOpen(true);
   };
@@ -137,8 +136,8 @@ export function CommuteHistoryClient() {
 
     try {
       const res = await updateCommuteRecord(selectedRecord.id, {
-        clockIn: new Date(editClockIn),
-        clockOut: editClockOut ? new Date(editClockOut) : null,
+        clockIn: editClockIn,
+        clockOut: editClockOut || null,
       });
 
       if (res.success) {
@@ -291,9 +290,14 @@ export function CommuteHistoryClient() {
                   records.map((record) => (
                     <TableRow key={record.id} className="group">
                       <TableCell className="font-medium text-zinc-500">
-                        {format(new Date(record.date), "MM-dd (EEE)", {
-                          locale: ko,
-                        })}
+                        {record.date
+                          ? kst.format(new Date(record.date), "MM-dd")
+                          : "-"}
+                        <span className="ml-1">
+                          (
+                          {format(new Date(record.date), "EEE", { locale: ko })}
+                          )
+                        </span>
                       </TableCell>
                       <TableCell className="font-bold text-zinc-900 dark:text-zinc-100">
                         {record.employee.name}
@@ -302,7 +306,7 @@ export function CommuteHistoryClient() {
                         <RoleBadge role={record.employee.role} />
                       </TableCell>
                       <TableCell className="text-emerald-700 font-medium">
-                        {format(new Date(record.clockIn), "HH:mm")}
+                        {kst.format(new Date(record.clockIn), "HH:mm")}
                       </TableCell>
                       <TableCell
                         className={
@@ -312,7 +316,7 @@ export function CommuteHistoryClient() {
                         }
                       >
                         {record.clockOut
-                          ? format(new Date(record.clockOut), "HH:mm")
+                          ? kst.format(new Date(record.clockOut), "HH:mm")
                           : "미마감"}
                       </TableCell>
                       <TableCell>
@@ -357,9 +361,16 @@ export function CommuteHistoryClient() {
                         </div>
                         <div className="text-sm text-zinc-500 flex items-center gap-1">
                           <CalendarIcon className="size-3" />
-                          {format(new Date(record.date), "MM월 dd일 (EEE)", {
-                            locale: ko,
-                          })}
+                          {record.date
+                            ? kst.format(new Date(record.date), "MM월 dd일")
+                            : "-"}
+                          <span className="ml-1">
+                            (
+                            {format(new Date(record.date), "EEE", {
+                              locale: ko,
+                            })}
+                            )
+                          </span>
                         </div>
                       </div>
                       <Button
@@ -375,7 +386,7 @@ export function CommuteHistoryClient() {
                       <div className="text-center">
                         <div className="text-xs text-zinc-500 mb-1">출근</div>
                         <div className="font-bold text-emerald-600">
-                          {format(new Date(record.clockIn), "HH:mm")}
+                          {kst.format(new Date(record.clockIn), "HH:mm")}
                         </div>
                       </div>
                       <div className="text-center flex items-center justify-center pt-4">
@@ -391,7 +402,7 @@ export function CommuteHistoryClient() {
                           }`}
                         >
                           {record.clockOut
-                            ? format(new Date(record.clockOut), "HH:mm")
+                            ? kst.format(new Date(record.clockOut), "HH:mm")
                             : "미마감"}
                         </div>
                       </div>
@@ -420,10 +431,20 @@ export function CommuteHistoryClient() {
             <DialogTitle>출퇴근 기록 수정</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>이름</Label>
-              <div className="font-bold text-lg">
-                {selectedRecord?.employee.name}
+            <div className="flex justify-between items-center bg-zinc-50 dark:bg-zinc-900 p-3 rounded-xl border">
+              <div>
+                <Label className="text-zinc-500 text-xs">이름</Label>
+                <div className="font-bold text-lg">
+                  {selectedRecord?.employee.name}
+                </div>
+              </div>
+              <div className="text-right">
+                <Label className="text-zinc-500 text-xs">영업일(기준일)</Label>
+                <div className="font-bold text-lg text-blue-600">
+                  {selectedRecord?.date
+                    ? kst.format(new Date(selectedRecord.date), "MM-dd")
+                    : "-"}
+                </div>
               </div>
             </div>
             <div className="grid gap-2">
