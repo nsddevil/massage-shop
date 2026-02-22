@@ -3,12 +3,13 @@ import { WeeklySettlementClient } from "./WeeklySettlementClient";
 import { getWeeklySettlementData } from "@/app/actions/settlement";
 import { startOfWeek, endOfWeek } from "date-fns";
 import { unstable_noStore as noStore } from "next/cache";
+import { getKSTDate } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
 
 export default async function WeeklySettlementPage() {
   noStore();
-  const now = new Date();
+  const now = getKSTDate();
   // 월요일~일요일 범위
   const start = startOfWeek(now, { weekStartsOn: 1 });
   const end = endOfWeek(now, { weekStartsOn: 1 });

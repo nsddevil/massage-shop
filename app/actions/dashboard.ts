@@ -10,10 +10,11 @@ import {
   format,
   eachDayOfInterval,
 } from "date-fns";
+import { getKSTDate } from "@/lib/date";
 
 export async function getDashboardStats() {
   try {
-    const now = new Date();
+    const now = getKSTDate();
     const todayStart = startOfDay(now);
     const todayEnd = endOfDay(now);
     const monthStart = startOfMonth(now);
@@ -111,7 +112,7 @@ export async function getDashboardStats() {
 
 export async function getWeeklyRevenue() {
   try {
-    const now = new Date();
+    const now = getKSTDate();
     const sevenDaysAgo = subDays(now, 6);
     const startDate = startOfDay(sevenDaysAgo);
     const endDate = endOfDay(now);
@@ -198,7 +199,7 @@ export async function getRecentSales() {
 
 export async function getExpenseDistribution() {
   try {
-    const now = new Date();
+    const now = getKSTDate();
     const monthStart = startOfMonth(now);
     const monthEnd = endOfMonth(now);
 
@@ -239,7 +240,7 @@ export async function getExpenseDistribution() {
 
 export async function getPaymentDistribution() {
   try {
-    const now = new Date();
+    const now = getKSTDate();
     const monthStart = startOfMonth(now);
     const monthEnd = endOfMonth(now);
 
@@ -276,7 +277,7 @@ export async function getPaymentDistribution() {
 }
 export async function getTopRankings() {
   try {
-    const now = new Date();
+    const now = getKSTDate();
     const monthStart = startOfMonth(now);
     const monthEnd = endOfMonth(now);
 

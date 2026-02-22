@@ -2,10 +2,11 @@
 
 import prisma from "@/lib/prisma";
 import { startOfMonth, endOfMonth, eachDayOfInterval, format } from "date-fns";
+import { getKSTDate } from "@/lib/date";
 
 export async function getMonthlyFinance(year: number, month: number) {
   try {
-    const startDate = startOfMonth(new Date(year, month - 1));
+    const startDate = startOfMonth(getKSTDate(year, month - 1, 1));
     const endDate = endOfMonth(startDate);
 
     // 1. 매출 데이터 가져오기

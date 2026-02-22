@@ -3,12 +3,13 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { subDays, startOfDay, differenceInMinutes, endOfDay } from "date-fns";
+import { getKSTDate } from "@/lib/date";
 
 /**
  * 현재 시간을 기준으로 영업일(Business Date)을 계산합니다.
  * - 기준: 새벽 06:00 이전이면 전날을 영업일로 간주
  */
-function getBusinessDate(date: Date = new Date()) {
+function getBusinessDate(date: Date = getKSTDate()) {
   const hours = date.getHours();
   if (hours < 6) {
     return startOfDay(subDays(date, 1));
@@ -21,7 +22,7 @@ function getBusinessDate(date: Date = new Date()) {
  */
 export async function clockIn(employeeId: string) {
   try {
-    const now = new Date();
+    const now = getKSTDate();
     const businessDate = getBusinessDate(now);
 
     // 이미 출근 중인지 확인 (아직 퇴근 안 한 기록이 있는지)
@@ -58,7 +59,7 @@ export async function clockIn(employeeId: string) {
  */
 export async function clockOut(employeeId: string) {
   try {
-    const now = new Date();
+    const now = getKSTDate();
 
     // 가장 최근의 미종료 출근 기록 찾기
     const attendance = await prisma.attendance.findFirst({
@@ -101,7 +102,7 @@ export async function clockOut(employeeId: string) {
  */
 export async function getTodayCommuteStatus() {
   try {
-    const now = new Date();
+    const now = getKSTDate();
     const businessDate = getBusinessDate(now);
 
     // 1. 전체 직원 목록 (퇴직자 제외)

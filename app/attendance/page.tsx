@@ -2,12 +2,13 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { CommutePageClient } from "./CommutePageClient";
 import { getTodayCommuteStatus } from "@/app/actions/commute";
 import { unstable_noStore as noStore } from "next/cache";
+import { getKSTDate } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
 
 export default async function CommutePage() {
   noStore();
-  const now = new Date();
+  const now = getKSTDate();
   const { data, businessDate } = await getTodayCommuteStatus();
 
   return (

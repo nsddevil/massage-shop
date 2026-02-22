@@ -4,10 +4,11 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { FinancePageClient } from "./FinancePageClient";
 import { getMonthlyFinance } from "@/app/actions/finance";
 import { unstable_noStore as noStore } from "next/cache";
+import { getKSTDate } from "@/lib/date";
 
 export default async function FinancePage() {
   noStore();
-  const now = new Date();
+  const now = getKSTDate();
   const financeRes = await getMonthlyFinance(
     now.getFullYear(),
     now.getMonth() + 1,
