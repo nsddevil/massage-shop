@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { Header } from "@/components/dashboard/header";
-import { LogIn, LogOut, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  LogIn,
+  LogOut,
+  CheckCircle2,
+  AlertCircle,
+  History,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,6 +24,7 @@ import {
   getTodayCommuteStatus,
 } from "@/app/actions/commute";
 import { format } from "date-fns";
+import { useRouter } from "next/navigation";
 import { ko } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -41,6 +48,7 @@ export function CommutePageClient({
   const [data, setData] = useState<EmployeeStatus[]>(initialData);
   const [selectedEmp, setSelectedEmp] = useState<EmployeeStatus | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -138,14 +146,26 @@ export function CommutePageClient({
       <main className="flex-1 overflow-y-auto p-4 md:p-8">
         <div className="max-w-5xl mx-auto space-y-8">
           {/* Top Section: Date & Time */}
-          <div className="text-center space-y-2 py-4">
-            <h2 className="text-sm font-bold text-zinc-500 uppercase tracking-widest">
-              {format(businessDate, "yyyy년 MM월 dd일 (EEE)", { locale: ko })}{" "}
-              영업일 기준
-            </h2>
-            <h1 className="text-4xl md:text-5xl font-black text-zinc-900 dark:text-zinc-100 tabular-nums tracking-tight">
-              {format(currentTime, "HH:mm:ss")}
-            </h1>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4">
+            <div className="flex-1 text-center md:text-left">
+              <h2 className="text-sm font-bold text-zinc-500 uppercase tracking-widest">
+                {format(businessDate, "yyyy년 MM월 dd일 (EEE)", { locale: ko })}{" "}
+                영업일 기준
+              </h2>
+              <h1 className="text-4xl md:text-5xl font-black text-zinc-900 dark:text-zinc-100 tabular-nums tracking-tight">
+                {format(currentTime, "HH:mm:ss")}
+              </h1>
+            </div>
+
+            <Button
+              variant="outline"
+              size="lg"
+              className="rounded-2xl font-bold gap-2 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm"
+              onClick={() => router.push("/attendance/history")}
+            >
+              <History className="size-5 text-zinc-400" />
+              전체 기록 조회
+            </Button>
           </div>
 
           {/* Employee Grid */}
@@ -300,6 +320,17 @@ export function CommutePageClient({
                   퇴근 시 일일 식대가 급여에 포함됩니다.
                 </div>
               )}
+
+            {/* 히스토리 바로가기 버튼 */}
+            <Button
+              variant="ghost"
+              className="w-full text-zinc-500 font-bold gap-2"
+              onClick={() =>
+                router.push(`/attendance/history?employeeId=${selectedEmp?.id}`)
+              }
+            >
+              <History className="size-4" />이 직원의 출퇴근 기록 보기
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

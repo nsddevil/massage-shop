@@ -9,6 +9,8 @@ import {
   addMonths,
 } from "date-fns";
 import { ko } from "date-fns/locale";
+import { useSearchParams } from "next/navigation";
+import { useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -29,6 +31,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Header } from "@/components/dashboard/header";
 import {
@@ -44,6 +53,8 @@ import {
   updateCommuteRecord,
   deleteCommuteRecord,
 } from "@/app/actions/commute";
+import { getEmployees } from "@/app/actions/staff";
+import { Employee, ROLE_LABELS } from "@/types";
 
 interface CommuteRecord {
   id: string;
@@ -59,8 +70,14 @@ interface CommuteRecord {
 }
 
 export function CommuteHistoryClient() {
+  const searchParams = useSearchParams();
+  const initialEmployeeId = searchParams.get("employeeId") || "ALL";
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [records, setRecords] = useState<CommuteRecord[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [selectedEmployeeId, setSelectedEmployeeId] =
+    useState(initialEmployeeId);
   const [loading, setLoading] = useState(false);
 
   // 수정 다이얼로그 상태
@@ -71,23 +88,34 @@ export function CommuteHistoryClient() {
   const [editClockIn, setEditClockIn] = useState("");
   const [editClockOut, setEditClockOut] = useState("");
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     setLoading(true);
     const startDate = startOfMonth(currentDate);
     const endDate = endOfMonth(currentDate);
 
-    const res = await getCommuteHistory(startDate, endDate);
+    const res = await getCommuteHistory(startDate, endDate, selectedEmployeeId);
     if (res.success && res.data) {
       setRecords(res.data as unknown as CommuteRecord[]);
     } else {
       toast.error(res.error || "내역을 불러오는데 실패했습니다.");
     }
     setLoading(false);
-  };
+  }, [currentDate, selectedEmployeeId]);
+
+  const fetchEmployees = useCallback(async () => {
+    const res = await getEmployees({ includeResigned: true });
+    if (res.success && res.data) {
+      setEmployees(res.data as Employee[]);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchEmployees();
+  }, [fetchEmployees]);
 
   useEffect(() => {
     fetchHistory();
-  }, [currentDate]);
+  }, [fetchHistory]);
 
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
@@ -197,6 +225,32 @@ export function CommuteHistoryClient() {
               <Button variant="ghost" size="icon" onClick={handleNextMonth}>
                 <ChevronRight className="size-4" />
               </Button>
+            </div>
+
+            {/* Employee Filter */}
+            <div className="flex items-center gap-2">
+              <Select
+                value={selectedEmployeeId}
+                onValueChange={(val) => setSelectedEmployeeId(val)}
+              >
+                <SelectTrigger className="w-[180px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 font-bold rounded-xl shadow-sm">
+                  <SelectValue placeholder="모든 직원" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl overflow-hidden shadow-xl border-zinc-100 dark:border-zinc-800">
+                  <SelectItem value="ALL" className="font-bold">
+                    전체 직원
+                  </SelectItem>
+                  {employees.map((emp) => (
+                    <SelectItem
+                      key={emp.id}
+                      value={emp.id}
+                      className="font-bold"
+                    >
+                      {emp.name} ({ROLE_LABELS[emp.role] || emp.role})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
