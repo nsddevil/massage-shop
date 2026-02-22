@@ -1,13 +1,17 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { startOfMonth, endOfMonth, eachDayOfInterval, format } from "date-fns";
-import { getKSTDate } from "@/lib/date";
+import { eachDayOfInterval, format } from "date-fns";
+import { kst } from "@/lib/date";
 
 export async function getMonthlyFinance(year: number, month: number) {
   try {
-    const startDate = startOfMonth(getKSTDate(year, month - 1, 1));
-    const endDate = endOfMonth(startDate);
+    // KST 기준 월의 시작/끝 계산
+    const baseDate = new Date(
+      Date.UTC(year, month - 1, 1) - 9 * 60 * 60 * 1000,
+    );
+    const startDate = kst.startOfMonth(baseDate);
+    const endDate = kst.endOfMonth(startDate);
 
     // 1. 매출 데이터 가져오기
     const sales = await prisma.sale.findMany({
@@ -44,18 +48,17 @@ export async function getMonthlyFinance(year: number, month: number) {
     });
 
     // 4. 추가 지급액 (가불/보너스) 가져오기
-    // 보통 Settlement에 포함되지만, 포함되지 않은 경우를 대비
     const extraPayments = await prisma.extraPayment.findMany({
       where: {
         date: {
           gte: startDate,
           lte: endDate,
         },
-        isSettled: false, // 아직 정산되지 않은 항목만 별도로 지출로 잡음
+        isSettled: false,
       },
     });
 
-    // 일별 데이터 취합을 위한 맵 생성
+    // 일별 데이터 취합
     const daysInMonth = eachDayOfInterval({ start: startDate, end: endDate });
     const dailyData: Record<
       string,
@@ -73,16 +76,14 @@ export async function getMonthlyFinance(year: number, month: number) {
     let totalRevenue = 0;
     let totalExpense = 0;
 
-    // 매출 합산
     sales.forEach((sale) => {
-      totalRevenue += sale.totalPrice; // 조건 없이 전체 합계에 먼저 가산
+      totalRevenue += sale.totalPrice;
       const dayKey = format(sale.createdAt, "yyyy-MM-dd");
       if (dailyData[dayKey]) {
         dailyData[dayKey].revenue += sale.totalPrice;
       }
     });
 
-    // 일반 지출 합산
     expenses.forEach((exp) => {
       totalExpense += exp.amount;
       const dayKey = format(exp.date, "yyyy-MM-dd");
@@ -91,7 +92,6 @@ export async function getMonthlyFinance(year: number, month: number) {
       }
     });
 
-    // 정산 지출 합산
     settlements.forEach((set) => {
       totalExpense += set.totalAmount;
       const dayKey = format(set.createdAt, "yyyy-MM-dd");
@@ -100,7 +100,6 @@ export async function getMonthlyFinance(year: number, month: number) {
       }
     });
 
-    // 추가 지급액 합산 (정산되지 않은 것만)
     extraPayments.forEach((extra) => {
       totalExpense += extra.amount;
       const dayKey = format(extra.date, "yyyy-MM-dd");
@@ -109,7 +108,6 @@ export async function getMonthlyFinance(year: number, month: number) {
       }
     });
 
-    // 순이익 계산
     Object.keys(dailyData).forEach((key) => {
       dailyData[key].netProfit =
         dailyData[key].revenue - dailyData[key].expense;
@@ -120,7 +118,6 @@ export async function getMonthlyFinance(year: number, month: number) {
       ...data,
     }));
 
-    // 정산 내역 분리 (주급=커미션, 월급=인건비)
     const commissionSettlements = settlements.filter(
       (s) => s.type === "WEEKLY",
     );
@@ -154,5 +151,47 @@ export async function getMonthlyFinance(year: number, month: number) {
       success: false,
       error: "월별 재무 데이터를 불러오는데 실패했습니다.",
     };
+  }
+}
+
+export async function getFinanceStats() {
+  try {
+    const now = kst.nowKST();
+    const today = kst.startOfDay(now);
+    const monthStart = kst.startOfMonth(now);
+    const monthEnd = kst.endOfMonth(now);
+
+    const todaySales = await prisma.sale.aggregate({
+      where: {
+        createdAt: { gte: today, lte: kst.endOfDay(today) },
+      },
+      _sum: { totalPrice: true },
+    });
+
+    const monthSales = await prisma.sale.aggregate({
+      where: {
+        createdAt: { gte: monthStart, lte: monthEnd },
+      },
+      _sum: { totalPrice: true },
+    });
+
+    const monthExpenses = await prisma.expense.aggregate({
+      where: {
+        date: { gte: monthStart, lte: monthEnd },
+      },
+      _sum: { amount: true },
+    });
+
+    return {
+      success: true,
+      data: {
+        todayRevenue: todaySales._sum.totalPrice || 0,
+        monthRevenue: monthSales._sum.totalPrice || 0,
+        monthExpense: monthExpenses._sum.amount || 0,
+      },
+    };
+  } catch (error) {
+    console.error("Finance Stats Error:", error);
+    return { success: false, error: "통계 조회 실패" };
   }
 }

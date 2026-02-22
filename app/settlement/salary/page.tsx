@@ -7,11 +7,11 @@ import {
   getSalarySettlementStats,
 } from "@/app/actions/settlement";
 import { unstable_noStore as noStore } from "next/cache";
-import { getKSTDate } from "@/lib/date";
+import { kst } from "@/lib/date";
 
 export default async function SalarySettlementPage() {
   noStore();
-  const now = getKSTDate();
+  const now = kst.now();
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
 

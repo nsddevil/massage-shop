@@ -1,13 +1,8 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import {
-  startOfDay,
-  endOfDay,
-  differenceInCalendarDays,
-  startOfMonth,
-  endOfMonth,
-} from "date-fns";
+import { differenceInCalendarDays } from "date-fns";
+import { kst } from "@/lib/date";
 import { revalidatePath } from "next/cache";
 import {
   SalaryCalculationResult,
@@ -74,8 +69,8 @@ export async function calculateSalaryAction(
 
     if (!employee) throw new Error("직원을 찾을 수 없습니다.");
 
-    const start = startOfDay(startDate);
-    const end = endOfDay(endDate);
+    const start = kst.startOfDay(startDate);
+    const end = kst.endOfDay(endDate);
 
     // 1. 출퇴근 기록 조회
     const attendances = await prisma.attendance.findMany({
@@ -210,8 +205,8 @@ export async function getSalarySettlementHistory(
     };
 
     if (year && month) {
-      const start = startOfMonth(new Date(year, month - 1, 1));
-      const end = endOfMonth(new Date(year, month - 1, 1));
+      const start = kst.startOfMonth(new Date(year, month - 1, 1));
+      const end = kst.endOfMonth(new Date(year, month - 1, 1));
       where.createdAt = { gte: start, lte: end };
     }
 
@@ -219,7 +214,7 @@ export async function getSalarySettlementHistory(
       where,
       include: {
         employee: {
-          select: { id: true, name: true, role: true },
+          select: { id: true; name: true; role: true },
         },
       },
       orderBy: { createdAt: "desc" },
@@ -240,8 +235,8 @@ export async function getSalarySettlementHistory(
  */
 export async function getSalarySettlementStats(year: number, month: number) {
   try {
-    const start = startOfMonth(new Date(year, month - 1, 1));
-    const end = endOfMonth(new Date(year, month - 1, 1));
+    const start = kst.startOfMonth(new Date(year, month - 1, 1));
+    const end = kst.endOfMonth(new Date(year, month - 1, 1));
 
     // 1. 이번 달 정산 완료 건수 (createdAt 기준)
     const settledCount = await prisma.settlement.count({
@@ -331,8 +326,8 @@ export async function confirmSettlement(data: {
  */
 export async function getWeeklySettlementData(startDate: Date, endDate: Date) {
   try {
-    const start = startOfDay(startDate);
-    const end = endOfDay(endDate);
+    const start = kst.startOfDay(startDate);
+    const end = kst.endOfDay(endDate);
 
     // 1. 관리사(THERAPIST)만 조회 (실장은 주급 제외)
     const therapists = await prisma.employee.findMany({
@@ -358,16 +353,6 @@ export async function getWeeklySettlementData(startDate: Date, endDate: Date) {
 
         // 주급에서는 보너스/가불금 제외 (월급에서 처리)
         // 화면 표시용으로 조회는 할 수 있으나, 정산 금액에는 포함하지 않음
-        /* 
-        /* 
-        const items = await prisma.extraPayment.findMany({
-          where: {
-            employeeId: therapist.id,
-            date: { gte: start, lte: end },
-            isSettled: false,
-          },
-        });
-        */
 
         const salesCount = commissions.length;
         const totalCommission = commissions.reduce(
@@ -379,7 +364,6 @@ export async function getWeeklySettlementData(startDate: Date, endDate: Date) {
           0,
         );
 
-        // 보너스/가불금 0 처리
         const totalBonus = 0;
         const totalAdvance = 0;
 
@@ -480,8 +464,8 @@ export async function getMonthlySettlementCandidates(
   month: number,
 ) {
   try {
-    const start = startOfMonth(new Date(year, month - 1, 1));
-    const end = endOfMonth(new Date(year, month - 1, 1));
+    const start = kst.startOfMonth(new Date(year, month - 1, 1));
+    const end = kst.endOfMonth(new Date(year, month - 1, 1));
 
     const employees = await prisma.employee.findMany({
       where: { resignedAt: null },
@@ -555,7 +539,6 @@ export async function deleteSettlement(id: string) {
 
     await prisma.$transaction(async (tx) => {
       // 1. 관련된 추가 수당(ExtraPayment)이 있다면 미정산 상태로 복구
-      // details JSON에 extraIds 혹은 관련 정보가 있는지 확인 (SALARY 정산의 경우)
       const details = settlement.details as { extraIds?: string[] };
       if (details.extraIds && details.extraIds.length > 0) {
         await tx.extraPayment.updateMany({
@@ -570,7 +553,6 @@ export async function deleteSettlement(id: string) {
       });
     });
 
-    // 3. 관련 페이지 재검증 (대시보드, 경영분석 포함)
     revalidatePath("/");
     revalidatePath("/finance");
     revalidatePath("/settlement/weekly");

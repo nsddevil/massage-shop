@@ -2,19 +2,19 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { subDays, startOfDay, differenceInMinutes, endOfDay } from "date-fns";
-import { getKSTDate } from "@/lib/date";
+import { subDays, differenceInMinutes } from "date-fns";
+import { kst } from "@/lib/date";
 
 /**
  * 현재 시간을 기준으로 영업일(Business Date)을 계산합니다.
  * - 기준: 새벽 06:00 이전이면 전날을 영업일로 간주
  */
-function getBusinessDate(date: Date = getKSTDate()) {
+function getBusinessDate(date: Date = kst.nowKST()) {
   const hours = date.getHours();
   if (hours < 6) {
-    return startOfDay(subDays(date, 1));
+    return kst.startOfDay(subDays(date, 1));
   }
-  return startOfDay(date);
+  return kst.startOfDay(date);
 }
 
 /**
@@ -188,8 +188,8 @@ export async function getCommuteHistory(
   try {
     const whereClause: any = {
       date: {
-        gte: startOfDay(startDate),
-        lte: endOfDay(endDate),
+        gte: kst.startOfDay(startDate),
+        lte: kst.endOfDay(endDate),
       },
     };
 

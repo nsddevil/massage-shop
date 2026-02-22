@@ -1,24 +1,16 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import {
-  startOfDay,
-  endOfDay,
-  subDays,
-  startOfMonth,
-  endOfMonth,
-  format,
-  eachDayOfInterval,
-} from "date-fns";
-import { getKSTDate } from "@/lib/date";
+import { subDays, format, eachDayOfInterval } from "date-fns";
+import { kst } from "@/lib/date";
 
 export async function getDashboardStats() {
   try {
-    const now = getKSTDate();
-    const todayStart = startOfDay(now);
-    const todayEnd = endOfDay(now);
-    const monthStart = startOfMonth(now);
-    const monthEnd = endOfMonth(now);
+    const now = kst.nowKST();
+    const todayStart = kst.startOfDay(now);
+    const todayEnd = kst.endOfDay(now);
+    const monthStart = kst.startOfMonth(now);
+    const monthEnd = kst.endOfMonth(now);
 
     // 1. 오늘의 매출
     const todaySales = await prisma.sale.aggregate({
@@ -112,10 +104,10 @@ export async function getDashboardStats() {
 
 export async function getWeeklyRevenue() {
   try {
-    const now = getKSTDate();
+    const now = kst.nowKST();
     const sevenDaysAgo = subDays(now, 6);
-    const startDate = startOfDay(sevenDaysAgo);
-    const endDate = endOfDay(now);
+    const startDate = kst.startOfDay(sevenDaysAgo);
+    const endDate = kst.endOfDay(now);
 
     const sales = await prisma.sale.findMany({
       where: {
@@ -199,9 +191,9 @@ export async function getRecentSales() {
 
 export async function getExpenseDistribution() {
   try {
-    const now = getKSTDate();
-    const monthStart = startOfMonth(now);
-    const monthEnd = endOfMonth(now);
+    const now = kst.nowKST();
+    const monthStart = kst.startOfMonth(now);
+    const monthEnd = kst.endOfMonth(now);
 
     const expenses = await prisma.expense.findMany({
       where: { date: { gte: monthStart, lte: monthEnd } },
@@ -240,9 +232,9 @@ export async function getExpenseDistribution() {
 
 export async function getPaymentDistribution() {
   try {
-    const now = getKSTDate();
-    const monthStart = startOfMonth(now);
-    const monthEnd = endOfMonth(now);
+    const now = kst.nowKST();
+    const monthStart = kst.startOfMonth(now);
+    const monthEnd = kst.endOfMonth(now);
 
     const sales = await prisma.sale.groupBy({
       by: ["payMethod"],
@@ -275,11 +267,12 @@ export async function getPaymentDistribution() {
     };
   }
 }
+
 export async function getTopRankings() {
   try {
-    const now = getKSTDate();
-    const monthStart = startOfMonth(now);
-    const monthEnd = endOfMonth(now);
+    const now = kst.nowKST();
+    const monthStart = kst.startOfMonth(now);
+    const monthEnd = kst.endOfMonth(now);
 
     // 1. 인기 코스 TOP 3 (판매량 기준)
     const topCourseIds = await prisma.sale.groupBy({

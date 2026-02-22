@@ -1,14 +1,14 @@
-export const dynamic = "force-dynamic";
-
-import { Sidebar } from "@/components/dashboard/sidebar";
-import { FinancePageClient } from "./FinancePageClient";
 import { getMonthlyFinance } from "@/app/actions/finance";
+import { Sidebar } from "@/components/dashboard/sidebar";
+import { FinancePageClient, FinanceData } from "./FinancePageClient";
 import { unstable_noStore as noStore } from "next/cache";
-import { getKSTDate } from "@/lib/date";
+import { kst } from "@/lib/date";
+
+export const dynamic = "force-dynamic";
 
 export default async function FinancePage() {
   noStore();
-  const now = getKSTDate();
+  const now = kst.now();
   const financeRes = await getMonthlyFinance(
     now.getFullYear(),
     now.getMonth() + 1,
@@ -24,7 +24,7 @@ export default async function FinancePage() {
       <FinancePageClient
         initialData={
           financeRes.success && financeRes.data
-            ? (financeRes.data as any)
+            ? (financeRes.data as FinanceData)
             : {
                 summary: {
                   totalRevenue: 0,
