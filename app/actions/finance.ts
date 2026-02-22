@@ -74,37 +74,37 @@ export async function getMonthlyFinance(year: number, month: number) {
 
     // 매출 합산
     sales.forEach((sale) => {
+      totalRevenue += sale.totalPrice; // 조건 없이 전체 합계에 먼저 가산
       const dayKey = format(sale.createdAt, "yyyy-MM-dd");
       if (dailyData[dayKey]) {
         dailyData[dayKey].revenue += sale.totalPrice;
-        totalRevenue += sale.totalPrice;
       }
     });
 
     // 일반 지출 합산
     expenses.forEach((exp) => {
+      totalExpense += exp.amount;
       const dayKey = format(exp.date, "yyyy-MM-dd");
       if (dailyData[dayKey]) {
         dailyData[dayKey].expense += exp.amount;
-        totalExpense += exp.amount;
       }
     });
 
     // 정산 지출 합산
     settlements.forEach((set) => {
+      totalExpense += set.totalAmount;
       const dayKey = format(set.createdAt, "yyyy-MM-dd");
       if (dailyData[dayKey]) {
         dailyData[dayKey].expense += set.totalAmount;
-        totalExpense += set.totalAmount;
       }
     });
 
-    // 추가 지급액 합산
+    // 추가 지급액 합산 (정산되지 않은 것만)
     extraPayments.forEach((extra) => {
+      totalExpense += extra.amount;
       const dayKey = format(extra.date, "yyyy-MM-dd");
       if (dailyData[dayKey]) {
         dailyData[dayKey].expense += extra.amount;
-        totalExpense += extra.amount;
       }
     });
 
