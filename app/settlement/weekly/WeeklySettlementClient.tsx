@@ -12,6 +12,7 @@ import {
   User,
   Plus,
   Minus,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   getWeeklySettlementData,
   createSettlement,
+  deleteSettlement,
 } from "@/app/actions/settlement";
 import { SettlementDetailDialog } from "./components/SettlementDetailDialog";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
@@ -37,6 +39,7 @@ export interface SettlementItem {
   totalAdvance: number;
   netAmount: number;
   isAlreadySettled: boolean;
+  settlementId?: string | null;
   details: {
     sales: {
       id: string;
@@ -132,6 +135,29 @@ export function WeeklySettlementClient({
       fetchSettlementData(currentDate);
     } else {
       alert(result.error || "정산 처리에 실패했습니다.");
+    }
+    setIsProcessing(null);
+  };
+
+  const handleDeleteSettlement = async (item: SettlementItem) => {
+    if (!item.settlementId) return;
+
+    if (
+      !confirm(
+        `${item.therapist.name} 관리사의 정산 내역을 삭제하시겠습니까?\n삭제된 금액은 지출 항목에서 제외됩니다.`,
+      )
+    ) {
+      return;
+    }
+
+    setIsProcessing(item.therapist.id);
+    const result = await deleteSettlement(item.settlementId);
+
+    if (result.success) {
+      alert("정산이 취소되었습니다.");
+      fetchSettlementData(currentDate);
+    } else {
+      alert(result.error || "정산 삭제에 실패했습니다.");
     }
     setIsProcessing(null);
   };
@@ -298,8 +324,26 @@ export function WeeklySettlementClient({
                           onClick={(e) => e.stopPropagation()}
                         >
                           {item.isAlreadySettled ? (
-                            <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm">
-                              <CheckCircle2 className="size-5" /> 완료됨
+                            <div className="flex flex-col gap-2 w-full">
+                              <div className="flex items-center justify-center gap-2 text-emerald-600 font-bold text-sm">
+                                <CheckCircle2 className="size-5" /> 완료됨
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteSettlement(item)}
+                                disabled={isProcessing === item.therapist.id}
+                                className="w-full text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 border-red-100 dark:border-red-900/30 rounded-xl h-9 font-bold"
+                              >
+                                {isProcessing === item.therapist.id ? (
+                                  <div className="size-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <>
+                                    <Trash2 className="size-4 mr-2" />
+                                    정산 취소
+                                  </>
+                                )}
+                              </Button>
                             </div>
                           ) : (
                             <Button

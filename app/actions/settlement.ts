@@ -1,7 +1,6 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { Role, ExtraPayment } from "@/generated/prisma/client";
 import {
   startOfDay,
   endOfDay,
@@ -304,7 +303,10 @@ export async function confirmSettlement(data: {
           totalDaysInPeriod: data.totalDaysInPeriod,
           workedDays: data.workedDays,
           totalAmount: data.totalAmount,
-          details: data.details as unknown as Prisma.InputJsonValue,
+          details: {
+            ...data.details,
+            extraIds: data.extraIds,
+          } as unknown as Prisma.InputJsonValue,
         },
       });
 
@@ -357,7 +359,8 @@ export async function getWeeklySettlementData(startDate: Date, endDate: Date) {
         // 주급에서는 보너스/가불금 제외 (월급에서 처리)
         // 화면 표시용으로 조회는 할 수 있으나, 정산 금액에는 포함하지 않음
         /* 
-        const extras = await prisma.extraPayment.findMany({
+        /* 
+        const items = await prisma.extraPayment.findMany({
           where: {
             employeeId: therapist.id,
             date: { gte: start, lte: end },
@@ -365,7 +368,6 @@ export async function getWeeklySettlementData(startDate: Date, endDate: Date) {
           },
         });
         */
-        const extras: ExtraPayment[] = [];
 
         const salesCount = commissions.length;
         const totalCommission = commissions.reduce(
@@ -402,6 +404,7 @@ export async function getWeeklySettlementData(startDate: Date, endDate: Date) {
           totalAdvance,
           netAmount,
           isAlreadySettled: !!existingSettlement,
+          settlementId: existingSettlement?.id || null,
           details: {
             sales: commissions.map((c) => ({
               id: c.sale.id,
@@ -447,7 +450,10 @@ export async function createSettlement(data: {
           periodStart: data.periodStart,
           periodEnd: data.periodEnd,
           totalAmount: data.totalAmount,
-          details: data.details as unknown as Prisma.InputJsonValue,
+          details: {
+            ...data.details,
+            extraIds: data.extraPaymentIds,
+          } as unknown as Prisma.InputJsonValue,
         },
       });
 
@@ -531,5 +537,48 @@ export async function getMonthlySettlementCandidates(
       success: false,
       error: "정산 대상자 정보를 불러오는데 실패했습니다.",
     };
+  }
+}
+
+/**
+ * 정산 삭제
+ */
+export async function deleteSettlement(id: string) {
+  try {
+    const settlement = await prisma.settlement.findUnique({
+      where: { id },
+    });
+
+    if (!settlement) {
+      return { success: false, error: "정산 내역을 찾을 수 없습니다." };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // 1. 관련된 추가 수당(ExtraPayment)이 있다면 미정산 상태로 복구
+      // details JSON에 extraIds 혹은 관련 정보가 있는지 확인 (SALARY 정산의 경우)
+      const details = settlement.details as { extraIds?: string[] };
+      if (details.extraIds && details.extraIds.length > 0) {
+        await tx.extraPayment.updateMany({
+          where: { id: { in: details.extraIds } },
+          data: { isSettled: false },
+        });
+      }
+
+      // 2. 정산 기록 삭제
+      await tx.settlement.delete({
+        where: { id },
+      });
+    });
+
+    // 3. 관련 페이지 재검증 (대시보드, 경영분석 포함)
+    revalidatePath("/");
+    revalidatePath("/finance");
+    revalidatePath("/settlement/weekly");
+    revalidatePath("/settlement/salary/history");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete settlement:", error);
+    return { success: false, error: "정산 삭제에 실패했습니다." };
   }
 }
