@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { subDays, format, eachDayOfInterval } from "date-fns";
+import { subDays, eachDayOfInterval } from "date-fns";
 import { kst } from "@/lib/date";
 
 export async function getDashboardStats() {
@@ -121,9 +121,9 @@ export async function getWeeklyRevenue() {
 
     const interval = eachDayOfInterval({ start: startDate, end: endDate });
     const dailyData = interval.map((day) => {
-      const dayStr = format(day, "MM/dd");
+      const dayStr = kst.format(day, "MM/dd");
       const dayTotal = sales
-        .filter((sale) => format(sale.createdAt, "MM/dd") === dayStr)
+        .filter((sale) => kst.format(sale.createdAt, "MM/dd") === dayStr)
         .reduce((sum, sale) => sum + sale.totalPrice, 0);
 
       return {
@@ -162,8 +162,8 @@ export async function getRecentSales() {
       success: true,
       data: sales.map((sale) => ({
         id: sale.id,
-        date: format(sale.createdAt, "MM/dd"),
-        time: format(sale.createdAt, "HH:mm"),
+        date: kst.format(sale.createdAt, "MM/dd"),
+        time: kst.format(sale.createdAt, "HH:mm"),
         course: sale.course.name,
         staff: {
           name: sale.therapists[0]?.employee.name || "N/A",

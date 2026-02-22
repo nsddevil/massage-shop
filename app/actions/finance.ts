@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { eachDayOfInterval, format } from "date-fns";
+import { eachDayOfInterval } from "date-fns";
 import { kst } from "@/lib/date";
 
 export async function getMonthlyFinance(year: number, month: number) {
@@ -66,7 +66,7 @@ export async function getMonthlyFinance(year: number, month: number) {
     > = {};
 
     daysInMonth.forEach((day) => {
-      dailyData[format(day, "yyyy-MM-dd")] = {
+      dailyData[kst.format(day, "yyyy-MM-dd")] = {
         revenue: 0,
         expense: 0,
         netProfit: 0,
@@ -78,7 +78,7 @@ export async function getMonthlyFinance(year: number, month: number) {
 
     sales.forEach((sale) => {
       totalRevenue += sale.totalPrice;
-      const dayKey = format(sale.createdAt, "yyyy-MM-dd");
+      const dayKey = kst.format(sale.createdAt, "yyyy-MM-dd");
       if (dailyData[dayKey]) {
         dailyData[dayKey].revenue += sale.totalPrice;
       }
@@ -86,7 +86,7 @@ export async function getMonthlyFinance(year: number, month: number) {
 
     expenses.forEach((exp) => {
       totalExpense += exp.amount;
-      const dayKey = format(exp.date, "yyyy-MM-dd");
+      const dayKey = kst.format(exp.date, "yyyy-MM-dd");
       if (dailyData[dayKey]) {
         dailyData[dayKey].expense += exp.amount;
       }
@@ -94,7 +94,7 @@ export async function getMonthlyFinance(year: number, month: number) {
 
     settlements.forEach((set) => {
       totalExpense += set.totalAmount;
-      const dayKey = format(set.createdAt, "yyyy-MM-dd");
+      const dayKey = kst.format(set.createdAt, "yyyy-MM-dd");
       if (dailyData[dayKey]) {
         dailyData[dayKey].expense += set.totalAmount;
       }
@@ -102,7 +102,7 @@ export async function getMonthlyFinance(year: number, month: number) {
 
     extraPayments.forEach((extra) => {
       totalExpense += extra.amount;
-      const dayKey = format(extra.date, "yyyy-MM-dd");
+      const dayKey = kst.format(extra.date, "yyyy-MM-dd");
       if (dailyData[dayKey]) {
         dailyData[dayKey].expense += extra.amount;
       }

@@ -1,13 +1,3 @@
-import {
-  // startOfDay, // No longer directly used from date-fns
-  // endOfDay, // No longer directly used from date-fns
-  // startOfWeek, // No longer directly used from date-fns
-  // endOfWeek, // No longer directly used from date-fns
-  // startOfMonth, // No longer directly used from date-fns
-  // endOfMonth, // No longer directly used from date-fns
-  addHours,
-} from "date-fns";
-
 const KST_OFFSET = 9 * 60 * 60 * 1000;
 
 /**
@@ -69,5 +59,21 @@ export const kst = {
     const y = kstTime.getUTCFullYear();
     const m = kstTime.getUTCMonth();
     return new Date(Date.UTC(y, m + 1, 1) - KST_OFFSET - 1);
+  },
+
+  format: (date: Date, formatStr: string) => {
+    const kstTime = new Date(date.getTime() + KST_OFFSET);
+    const y = kstTime.getUTCFullYear();
+    const m = kstTime.getUTCMonth() + 1;
+    const d = kstTime.getUTCDate();
+    const hh = kstTime.getUTCHours();
+    const mm = kstTime.getUTCMinutes();
+
+    return formatStr
+      .replace("yyyy", String(y))
+      .replace("MM", String(m).padStart(2, "0"))
+      .replace("dd", String(d).padStart(2, "0"))
+      .replace("HH", String(hh).padStart(2, "0"))
+      .replace("mm", String(mm).padStart(2, "0"));
   },
 };
