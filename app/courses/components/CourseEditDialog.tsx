@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2, BookOpen, Clock, Wallet, Users, Edit2 } from "lucide-react";
@@ -54,7 +54,7 @@ export function CourseEditDialog({
   const [isPending, setIsPending] = useState(false);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema) as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(formSchema) as Resolver<FormValues>,
     defaultValues: {
       name: course.name,
       type: course.type,

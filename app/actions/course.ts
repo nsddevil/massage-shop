@@ -2,9 +2,17 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { CreateCourseInput, UpdateCourseInput } from "@/types";
+import { validateOwner } from "@/lib/auth-util";
+import {
+  CreateCourseInput,
+  UpdateCourseInput,
+  ActionResponse,
+  Course,
+} from "@/types";
 
-export async function createCourse(data: CreateCourseInput) {
+export async function createCourse(
+  data: CreateCourseInput,
+): Promise<ActionResponse<Course>> {
   try {
     const course = await prisma.course.create({
       data: {
@@ -24,8 +32,15 @@ export async function createCourse(data: CreateCourseInput) {
   }
 }
 
-export async function updateCourse(data: UpdateCourseInput) {
+export async function updateCourse(
+  data: UpdateCourseInput,
+): Promise<ActionResponse<Course>> {
   try {
+    const authCheck = await validateOwner();
+    if (!authCheck.success) {
+      return { success: false, error: authCheck.error || "권한이 없습니다." };
+    }
+
     const { id, ...updateData } = data;
     const updatedCourse = await prisma.course.update({
       where: { id },
@@ -40,8 +55,16 @@ export async function updateCourse(data: UpdateCourseInput) {
   }
 }
 
-export async function toggleCourseStatus(id: string, isActive: boolean) {
+export async function toggleCourseStatus(
+  id: string,
+  isActive: boolean,
+): Promise<ActionResponse> {
   try {
+    const authCheck = await validateOwner();
+    if (!authCheck.success) {
+      return { success: false, error: authCheck.error || "권한이 없습니다." };
+    }
+
     await prisma.course.update({
       where: { id },
       data: { isActive },
@@ -55,8 +78,13 @@ export async function toggleCourseStatus(id: string, isActive: boolean) {
   }
 }
 
-export async function deleteCourse(id: string) {
+export async function deleteCourse(id: string): Promise<ActionResponse> {
   try {
+    const authCheck = await validateOwner();
+    if (!authCheck.success) {
+      return { success: false, error: authCheck.error || "권한이 없습니다." };
+    }
+
     // 매출 내역이 있는지 확인
     const salesCount = await prisma.sale.count({
       where: { courseId: id },
@@ -82,7 +110,7 @@ export async function deleteCourse(id: string) {
   }
 }
 
-export async function getCourses() {
+export async function getCourses(): Promise<ActionResponse<Course[]>> {
   try {
     const courses = await prisma.course.findMany({
       orderBy: {

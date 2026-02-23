@@ -2,3 +2,8 @@ export * from "./staff";
 export * from "./course";
 export * from "./sales";
 export * from "./settlement";
+export * from "./admin";
+export * from "./common";
+export * from "./expense";
+export * from "./extra-payment";
+export * from "./finance";

@@ -20,21 +20,9 @@ import { FinanceChart } from "./components/FinanceChart";
 import { getMonthlyFinance } from "@/app/actions/finance";
 import { format, addMonths, subMonths } from "date-fns";
 import { ko } from "date-fns/locale";
+import { FinanceData } from "@/types";
 
-export interface FinanceData {
-  summary: {
-    totalRevenue: number;
-    totalExpense: number;
-    netProfit: number;
-    expenseBreakdown: {
-      general: number;
-      commission: number;
-      labor: number;
-      extra: number;
-    };
-  };
-  chartData: any[];
-}
+// FinanceData interface moved to types/finance.ts
 
 export function FinancePageClient({
   initialData,
@@ -51,7 +39,8 @@ export function FinancePageClient({
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const frame = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   const fetchFinanceData = async (date: Date) => {

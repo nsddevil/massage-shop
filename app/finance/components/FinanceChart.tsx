@@ -12,15 +12,24 @@ import {
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { DailyFinanceData } from "@/types";
+
 interface FinanceChartProps {
-  data: any[];
+  data: DailyFinanceData[];
+}
+
+interface TooltipEntry {
+  name: string;
+  value: number;
+  color: string;
 }
 
 export function FinanceChart({ data }: FinanceChartProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const frame = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   return (
@@ -83,29 +92,31 @@ export function FinanceChart({ data }: FinanceChartProps) {
                             {label}
                           </p>
                           <div className="space-y-1.5">
-                            {payload.map((entry: any) => (
-                              <div
-                                key={entry.name}
-                                className="flex items-center justify-between gap-4"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <div
-                                    className="size-2 rounded-full"
-                                    style={{ backgroundColor: entry.color }}
-                                  />
-                                  <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
-                                    {entry.name === "revenue"
-                                      ? "매출"
-                                      : entry.name === "expense"
-                                        ? "지출"
-                                        : "순이익"}
+                            {(payload as unknown as TooltipEntry[]).map(
+                              (entry) => (
+                                <div
+                                  key={entry.name}
+                                  className="flex items-center justify-between gap-4"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div
+                                      className="size-2 rounded-full"
+                                      style={{ backgroundColor: entry.color }}
+                                    />
+                                    <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+                                      {entry.name === "revenue"
+                                        ? "매출"
+                                        : entry.name === "expense"
+                                          ? "지출"
+                                          : "순이익"}
+                                    </span>
+                                  </div>
+                                  <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">
+                                    ₩{Number(entry.value).toLocaleString()}
                                   </span>
                                 </div>
-                                <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">
-                                  ₩{entry.value.toLocaleString()}
-                                </span>
-                              </div>
-                            ))}
+                              ),
+                            )}
                           </div>
                         </div>
                       );

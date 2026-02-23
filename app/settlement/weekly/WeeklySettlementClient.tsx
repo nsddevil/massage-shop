@@ -26,6 +26,7 @@ import { SettlementDetailDialog } from "./components/SettlementDetailDialog";
 import { format, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
 import { ko } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { authClient } from "@/lib/auth-client";
 
 export interface SettlementItem {
   therapist: {
@@ -64,6 +65,10 @@ export function WeeklySettlementClient({
   initialData: SettlementItem[];
   initialDate?: string;
 }) {
+  const { data: session } = authClient.useSession();
+  const isOwner =
+    (session?.user as any)?.role === "admin" ||
+    (session?.user as any)?.role === "OWNER";
   const [mounted, setMounted] = useState(false);
   const [currentDate, setCurrentDate] = useState(
     initialDate ? new Date(initialDate) : new Date(),
@@ -332,22 +337,24 @@ export function WeeklySettlementClient({
                               <div className="flex items-center justify-center gap-2 text-emerald-600 font-bold text-sm">
                                 <CheckCircle2 className="size-5" /> 완료됨
                               </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDeleteSettlement(item)}
-                                disabled={isProcessing === item.therapist.id}
-                                className="w-full text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 border-red-100 dark:border-red-900/30 rounded-xl h-9 font-bold"
-                              >
-                                {isProcessing === item.therapist.id ? (
-                                  <div className="size-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
-                                ) : (
-                                  <>
-                                    <Trash2 className="size-4 mr-2" />
-                                    정산 취소
-                                  </>
-                                )}
-                              </Button>
+                              {isOwner && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteSettlement(item)}
+                                  disabled={isProcessing === item.therapist.id}
+                                  className="w-full text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 border-red-100 dark:border-red-900/30 rounded-xl h-9 font-bold"
+                                >
+                                  {isProcessing === item.therapist.id ? (
+                                    <div className="size-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                                  ) : (
+                                    <>
+                                      <Trash2 className="size-4 mr-2" />
+                                      정산 취소
+                                    </>
+                                  )}
+                                </Button>
+                              )}
                             </div>
                           ) : (
                             <Button

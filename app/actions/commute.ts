@@ -5,6 +5,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { revalidatePath } from "next/cache";
 import { subDays, differenceInMinutes } from "date-fns";
 import { kst } from "@/lib/date";
+import { validateOwner } from "@/lib/auth-util";
 
 /**
  * 현재 시간을 기준으로 영업일(Business Date)을 계산합니다.
@@ -233,6 +234,7 @@ export async function updateCommuteRecord(
   data: { clockIn: string; clockOut: string | null },
 ) {
   try {
+    await validateOwner();
     // datetime-local 인풋은 "YYYY-MM-DDTHH:mm" 형식이며 브라우저의 로컬 시간을 따름.
     // 이를 KST 시점으로 정확히 해석하기 위해 접미사 추가
     const clockIn = new Date(data.clockIn + ":00+09:00");
@@ -271,6 +273,7 @@ export async function updateCommuteRecord(
  */
 export async function deleteCommuteRecord(id: string) {
   try {
+    await validateOwner();
     await prisma.attendance.delete({
       where: { id },
     });

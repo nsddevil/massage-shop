@@ -28,6 +28,8 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { useState } from "react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { authClient } from "@/lib/auth-client";
+import { AuthUser } from "@/types";
 
 const pathMap: Record<string, string> = {
   "/": "대시보드",
@@ -44,6 +46,7 @@ const pathMap: Record<string, string> = {
 
 export function Header() {
   const pathname = usePathname();
+  const { data: session } = authClient.useSession();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
@@ -126,7 +129,30 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-2 md:gap-6">
-        {/* Date Selector - Always visible if possible, or desktop only as before */}
+        {/* User Info & Logout */}
+        <div className="flex items-center gap-4 border-r pr-4 mr-2 border-zinc-200 dark:border-zinc-800">
+          <div className="text-right hidden sm:block">
+            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              {session?.user.name}
+            </p>
+            <p className="text-xs text-zinc-500 uppercase">
+              {(session?.user as AuthUser | undefined)?.role || "USER"}
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={async () => {
+              await authClient.signOut();
+              window.location.href = "/auth";
+            }}
+            className="text-zinc-500 hover:text-red-500 hover:bg-red-50/50"
+          >
+            로그아웃
+          </Button>
+        </div>
+
+        {/* Date Selector */}
         <div className="sm:block">
           <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
             <PopoverTrigger asChild>

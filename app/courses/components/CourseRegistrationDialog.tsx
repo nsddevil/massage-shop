@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Plus, Loader2, BookOpen, Clock, Wallet, Users } from "lucide-react";
@@ -48,7 +48,7 @@ export function CourseRegistrationDialog() {
   const router = useRouter();
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema) as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(formSchema) as Resolver<FormValues>,
     defaultValues: {
       name: "",
       type: CourseType.SINGLE,

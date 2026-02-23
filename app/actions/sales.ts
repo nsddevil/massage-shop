@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { validateOwner } from "@/lib/auth-util";
 import { CreateSaleInput, UpdateSaleInput } from "@/types";
 import { kst } from "@/lib/date";
 
@@ -96,6 +97,9 @@ export async function createSale(data: CreateSaleInput) {
 
 export async function updateSale(data: UpdateSaleInput) {
   try {
+    const authCheck = await validateOwner();
+    if (!authCheck.success) return authCheck;
+
     // 1. 코스 정보 조회
     const course = await prisma.course.findUnique({
       where: { id: data.courseId },
@@ -158,6 +162,9 @@ export async function updateSale(data: UpdateSaleInput) {
 
 export async function deleteSale(id: string) {
   try {
+    const authCheck = await validateOwner();
+    if (!authCheck.success) return authCheck;
+
     await prisma.$transaction(async (tx) => {
       // 1. 관리사 커미션 기록 삭제
       await tx.saleTherapist.deleteMany({

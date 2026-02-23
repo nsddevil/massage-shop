@@ -2,10 +2,14 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { validateOwner } from "@/lib/auth-util";
 import { CreateEmployeeInput, UpdateEmployeeInput } from "@/types";
 
 export async function updateEmployee(data: UpdateEmployeeInput) {
   try {
+    const authCheck = await validateOwner();
+    if (!authCheck.success) return authCheck;
+
     const { id, ...updateData } = data;
     const updatedEmployee = await prisma.employee.update({
       where: { id },
@@ -30,6 +34,9 @@ export async function updateEmployee(data: UpdateEmployeeInput) {
 
 export async function deleteEmployee(id: string) {
   try {
+    const authCheck = await validateOwner();
+    if (!authCheck.success) return authCheck;
+
     await prisma.employee.delete({
       where: { id },
     });
@@ -47,6 +54,9 @@ export async function deleteEmployee(id: string) {
 
 export async function resignEmployee(id: string, resignedAt: Date) {
   try {
+    const authCheck = await validateOwner();
+    if (!authCheck.success) return authCheck;
+
     await prisma.employee.update({
       where: { id },
       data: { resignedAt },
@@ -65,6 +75,9 @@ export async function resignEmployee(id: string, resignedAt: Date) {
 
 export async function restoreEmployee(id: string) {
   try {
+    const authCheck = await validateOwner();
+    if (!authCheck.success) return authCheck;
+
     await prisma.employee.update({
       where: { id },
       data: { resignedAt: null },

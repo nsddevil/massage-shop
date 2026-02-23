@@ -48,6 +48,7 @@ import {
   Calendar as CalendarIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
 import {
   getCommuteHistory,
   updateCommuteRecord,
@@ -71,6 +72,10 @@ interface CommuteRecord {
 }
 
 export function CommuteHistoryClient() {
+  const { data: session } = authClient.useSession();
+  const isOwner =
+    (session?.user as any)?.role === "admin" ||
+    (session?.user as any)?.role === "OWNER";
   const searchParams = useSearchParams();
   const initialEmployeeId = searchParams.get("employeeId") || "ALL";
 
@@ -323,14 +328,16 @@ export function CommuteHistoryClient() {
                         {record.workHours ? `${record.workHours} 시간` : "-"}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => handleEditClick(record)}
-                        >
-                          <Pencil className="size-4 text-zinc-400 hover:text-blue-500" />
-                        </Button>
+                        {isOwner && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleEditClick(record)}
+                          >
+                            <Pencil className="size-4 text-zinc-400 hover:text-blue-500" />
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
@@ -373,13 +380,15 @@ export function CommuteHistoryClient() {
                           </span>
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEditClick(record)}
-                      >
-                        <Pencil className="size-4 text-zinc-400" />
-                      </Button>
+                      {isOwner && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditClick(record)}
+                        >
+                          <Pencil className="size-4 text-zinc-400" />
+                        </Button>
+                      )}
                     </div>
 
                     <div className="bg-zinc-50 dark:bg-zinc-900 p-3 rounded-xl grid grid-cols-3 gap-2">
@@ -467,9 +476,11 @@ export function CommuteHistoryClient() {
             </div>
           </div>
           <DialogFooter className="flex justify-between sm:justify-between">
-            <Button variant="destructive" onClick={handleDelete}>
-              <Trash2 className="size-4 mr-2" /> 삭제
-            </Button>
+            {isOwner && (
+              <Button variant="destructive" onClick={handleDelete}>
+                <Trash2 className="size-4 mr-2" /> 삭제
+              </Button>
+            )}
             <div className="flex gap-2">
               <Button
                 variant="outline"

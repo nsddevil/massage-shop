@@ -1,6 +1,6 @@
 "use client";
 
-import { SaleWithDetails, PAY_METHOD_LABELS } from "@/types";
+import { SaleWithDetails, PAY_METHOD_LABELS, AuthUser } from "@/types";
 import {
   Table,
   TableBody,
@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { deleteSale } from "@/app/actions/sales";
 import { SaleEditDialog } from "./SaleEditDialog";
 import { Course, Employee } from "@/types";
+import { authClient } from "@/lib/auth-client";
 
 interface SalesTableProps {
   sales: SaleWithDetails[];
@@ -39,6 +40,9 @@ export function SalesTable({
   employees,
   onSuccess,
 }: SalesTableProps) {
+  const { data: session } = authClient.useSession();
+  const user = session?.user as AuthUser | undefined;
+  const isOwner = user?.role === "admin" || user?.role === "OWNER";
   const [editingSale, setEditingSale] = useState<SaleWithDetails | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
@@ -89,30 +93,32 @@ export function SalesTable({
                       <span className="font-bold text-zinc-900 dark:text-zinc-100 text-lg">
                         {sale.course.name}
                       </span>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(sale)}>
-                            <Edit2 className="mr-2 h-4 w-4" />
-                            수정
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-red-600"
-                            onClick={() => handleDelete(sale.id)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            삭제
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {isOwner && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(sale)}>
+                              <Edit2 className="mr-2 h-4 w-4" />
+                              수정
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onClick={() => handleDelete(sale.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              삭제
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-none text-[10px] h-5 font-bold">
@@ -245,30 +251,32 @@ export function SalesTable({
                       ₩{totalCommission.toLocaleString()}
                     </TableCell>
                     <TableCell className="pr-6">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(sale)}>
-                            <Edit2 className="mr-2 h-4 w-4" />
-                            수정
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-red-600"
-                            onClick={() => handleDelete(sale.id)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            삭제
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {isOwner && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(sale)}>
+                              <Edit2 className="mr-2 h-4 w-4" />
+                              수정
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onClick={() => handleDelete(sale.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              삭제
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </TableCell>
                   </TableRow>
                 );

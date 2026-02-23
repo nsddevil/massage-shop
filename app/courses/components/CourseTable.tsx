@@ -12,7 +12,7 @@ import {
   Eye,
   BookOpen,
 } from "lucide-react";
-import { Course, COURSE_TYPE_LABELS } from "@/types";
+import { Course, COURSE_TYPE_LABELS, AuthUser } from "@/types";
 import { deleteCourse, toggleCourseStatus } from "@/app/actions/course";
 import {
   Table,
@@ -33,12 +33,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CourseEditDialog } from "./CourseEditDialog";
 import { cn } from "@/lib/utils";
+import { authClient } from "@/lib/auth-client";
 
 interface CourseTableProps {
   courses: Course[];
 }
 
 export function CourseTable({ courses }: CourseTableProps) {
+  const { data: session } = authClient.useSession();
+  const user = session?.user as AuthUser | undefined;
+  const isOwner = user?.role === "admin" || user?.role === "OWNER";
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [isPending, setIsPending] = useState<string | null>(null);
 
@@ -126,64 +130,66 @@ export function CourseTable({ courses }: CourseTableProps) {
                     </Badge>
                   </div>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        disabled={isPending === course.id}
-                        className="size-9 rounded-xl shadow-sm bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 border-none"
+                  {isOwner && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          disabled={isPending === course.id}
+                          className="size-9 rounded-xl shadow-sm bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 border-none"
+                        >
+                          {isPending === course.id ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <MoreHorizontal className="size-5" />
+                          )}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-48 rounded-2xl p-2 border-zinc-100 dark:border-zinc-800 shadow-xl"
                       >
-                        {isPending === course.id ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : (
-                          <MoreHorizontal className="size-5" />
-                        )}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="w-48 rounded-2xl p-2 border-zinc-100 dark:border-zinc-800 shadow-xl"
-                    >
-                      <DropdownMenuItem
-                        className="gap-3 py-2.5 px-3 font-bold text-sm rounded-xl transition-all cursor-pointer"
-                        onClick={() => setEditingCourse(course)}
-                      >
-                        <Edit2 className="size-4 text-blue-600" />
-                        정보 수정
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="gap-3 py-2.5 px-3 font-bold text-sm rounded-xl transition-all cursor-pointer"
-                        onClick={() =>
-                          handleToggleStatus(course.id, course.isActive)
-                        }
-                      >
-                        {isActive ? (
-                          <>
-                            <EyeOff className="size-4 text-orange-500" />
-                            <span className="text-orange-600">
-                              판매 중지(숨김)
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <Eye className="size-4 text-emerald-500" />
-                            <span className="text-emerald-600">
-                              판매 재개(노출)
-                            </span>
-                          </>
-                        )}
-                      </DropdownMenuItem>
-                      <div className="h-[1px] bg-zinc-100 dark:bg-zinc-800 my-1" />
-                      <DropdownMenuItem
-                        className="gap-3 py-2.5 px-3 font-bold text-sm text-red-600 focus:text-red-600 rounded-xl transition-all cursor-pointer"
-                        onClick={() => handleDelete(course.id, course.name)}
-                      >
-                        <Trash2 className="size-4" />
-                        영구 삭제
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                        <DropdownMenuItem
+                          className="gap-3 py-2.5 px-3 font-bold text-sm rounded-xl transition-all cursor-pointer"
+                          onClick={() => setEditingCourse(course)}
+                        >
+                          <Edit2 className="size-4 text-blue-600" />
+                          정보 수정
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="gap-3 py-2.5 px-3 font-bold text-sm rounded-xl transition-all cursor-pointer"
+                          onClick={() =>
+                            handleToggleStatus(course.id, course.isActive)
+                          }
+                        >
+                          {isActive ? (
+                            <>
+                              <EyeOff className="size-4 text-orange-500" />
+                              <span className="text-orange-600">
+                                판매 중지(숨김)
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="size-4 text-emerald-500" />
+                              <span className="text-emerald-600">
+                                판매 재개(노출)
+                              </span>
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                        <div className="h-[1px] bg-zinc-100 dark:bg-zinc-800 my-1" />
+                        <DropdownMenuItem
+                          className="gap-3 py-2.5 px-3 font-bold text-sm text-red-600 focus:text-red-600 rounded-xl transition-all cursor-pointer"
+                          onClick={() => handleDelete(course.id, course.name)}
+                        >
+                          <Trash2 className="size-4" />
+                          영구 삭제
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
 
                 {/* Mobile Info Grid */}
@@ -302,63 +308,67 @@ export function CourseTable({ courses }: CourseTableProps) {
                       )}
                     </TableCell>
                     <TableCell className="text-center pr-6">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={isPending === course.id}
-                            className="size-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                      {isOwner && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              disabled={isPending === course.id}
+                              className="size-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                            >
+                              {isPending === course.id ? (
+                                <Loader2 className="size-4 animate-spin" />
+                              ) : (
+                                <MoreHorizontal className="size-4" />
+                              )}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-40 rounded-xl"
                           >
-                            {isPending === course.id ? (
-                              <Loader2 className="size-4 animate-spin" />
-                            ) : (
-                              <MoreHorizontal className="size-4" />
-                            )}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className="w-40 rounded-xl"
-                        >
-                          <DropdownMenuItem
-                            className="gap-2 font-medium cursor-pointer"
-                            onClick={() => setEditingCourse(course)}
-                          >
-                            <Edit2 className="size-3.5 text-zinc-500" />
-                            정보 수정
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="gap-2 font-medium cursor-pointer"
-                            onClick={() =>
-                              handleToggleStatus(course.id, course.isActive)
-                            }
-                          >
-                            {course.isActive ? (
-                              <>
-                                <EyeOff className="size-3.5 text-orange-500" />
-                                <span className="text-orange-600">
-                                  판매 중지(숨김)
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                <Eye className="size-3.5 text-emerald-500" />
-                                <span className="text-emerald-600">
-                                  판매 재개(노출)
-                                </span>
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="gap-2 font-medium text-red-600 focus:text-red-600 cursor-pointer"
-                            onClick={() => handleDelete(course.id, course.name)}
-                          >
-                            <Trash2 className="size-3.5" />
-                            영구 삭제
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            <DropdownMenuItem
+                              className="gap-2 font-medium cursor-pointer"
+                              onClick={() => setEditingCourse(course)}
+                            >
+                              <Edit2 className="size-3.5 text-zinc-500" />
+                              정보 수정
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="gap-2 font-medium cursor-pointer"
+                              onClick={() =>
+                                handleToggleStatus(course.id, course.isActive)
+                              }
+                            >
+                              {course.isActive ? (
+                                <>
+                                  <EyeOff className="size-3.5 text-orange-500" />
+                                  <span className="text-orange-600">
+                                    판매 중지(숨김)
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <Eye className="size-3.5 text-emerald-500" />
+                                  <span className="text-emerald-600">
+                                    판매 재개(노출)
+                                  </span>
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="gap-2 font-medium text-red-600 focus:text-red-600 cursor-pointer"
+                              onClick={() =>
+                                handleDelete(course.id, course.name)
+                              }
+                            >
+                              <Trash2 className="size-3.5" />
+                              영구 삭제
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

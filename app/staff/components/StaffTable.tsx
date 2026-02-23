@@ -14,7 +14,7 @@ import {
   UserMinus,
   UserPlus,
 } from "lucide-react";
-import { Employee, ROLE_LABELS } from "@/types";
+import { Employee, ROLE_LABELS, AuthUser } from "@/types";
 import { resignEmployee, restoreEmployee } from "@/app/actions/staff";
 import {
   Table,
@@ -36,12 +36,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { StaffEditDialog } from "./StaffEditDialog";
 import { cn } from "@/lib/utils";
+import { authClient } from "@/lib/auth-client";
 
 interface StaffTableProps {
   employees: Employee[];
 }
 
 export function StaffTable({ employees }: StaffTableProps) {
+  const { data: session } = authClient.useSession();
+  const user = session?.user as AuthUser | undefined;
+  const isOwner = user?.role === "admin" || user?.role === "OWNER";
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [isPending, setIsPending] = useState<string | null>(null);
 
@@ -135,52 +139,54 @@ export function StaffTable({ employees }: StaffTableProps) {
                     </div>
                   </div>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        disabled={isPending === staff.id}
-                        className="size-9 rounded-xl shadow-sm bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 border-none"
+                  {isOwner && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          disabled={isPending === staff.id}
+                          className="size-9 rounded-xl shadow-sm bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 border-none"
+                        >
+                          {isPending === staff.id ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <MoreHorizontal className="size-5" />
+                          )}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-48 rounded-2xl p-2 border-zinc-100 dark:border-zinc-800 shadow-xl"
                       >
-                        {isPending === staff.id ? (
-                          <Loader2 className="size-4 animate-spin" />
+                        <DropdownMenuItem
+                          className="gap-3 py-2.5 px-3 font-bold text-sm rounded-xl transition-all cursor-pointer"
+                          onClick={() => setEditingEmployee(staff)}
+                        >
+                          <Edit2 className="size-4 text-blue-600" />
+                          정보 수정
+                        </DropdownMenuItem>
+                        <div className="h-[1px] bg-zinc-100 dark:bg-zinc-800 my-1" />
+                        {!isResigned ? (
+                          <DropdownMenuItem
+                            className="gap-3 py-2.5 px-3 font-bold text-sm text-orange-600 focus:text-orange-600 rounded-xl transition-all cursor-pointer"
+                            onClick={() => handleResign(staff.id, staff.name)}
+                          >
+                            <UserMinus className="size-4" />
+                            퇴사 처리
+                          </DropdownMenuItem>
                         ) : (
-                          <MoreHorizontal className="size-5" />
+                          <DropdownMenuItem
+                            className="gap-3 py-2.5 px-3 font-bold text-sm text-emerald-600 focus:text-emerald-600 rounded-xl transition-all cursor-pointer"
+                            onClick={() => handleRestore(staff.id, staff.name)}
+                          >
+                            <UserPlus className="size-4" />
+                            재직으로 복구
+                          </DropdownMenuItem>
                         )}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="w-48 rounded-2xl p-2 border-zinc-100 dark:border-zinc-800 shadow-xl"
-                    >
-                      <DropdownMenuItem
-                        className="gap-3 py-2.5 px-3 font-bold text-sm rounded-xl transition-all cursor-pointer"
-                        onClick={() => setEditingEmployee(staff)}
-                      >
-                        <Edit2 className="size-4 text-blue-600" />
-                        정보 수정
-                      </DropdownMenuItem>
-                      <div className="h-[1px] bg-zinc-100 dark:bg-zinc-800 my-1" />
-                      {!isResigned ? (
-                        <DropdownMenuItem
-                          className="gap-3 py-2.5 px-3 font-bold text-sm text-orange-600 focus:text-orange-600 rounded-xl transition-all cursor-pointer"
-                          onClick={() => handleResign(staff.id, staff.name)}
-                        >
-                          <UserMinus className="size-4" />
-                          퇴사 처리
-                        </DropdownMenuItem>
-                      ) : (
-                        <DropdownMenuItem
-                          className="gap-3 py-2.5 px-3 font-bold text-sm text-emerald-600 focus:text-emerald-600 rounded-xl transition-all cursor-pointer"
-                          onClick={() => handleRestore(staff.id, staff.name)}
-                        >
-                          <UserPlus className="size-4" />
-                          재직으로 복구
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
 
                 {/* Mobile Info Grid */}
@@ -359,55 +365,57 @@ export function StaffTable({ employees }: StaffTableProps) {
                         </span>
                       </TableCell>
                       <TableCell className="text-center pr-6">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              disabled={isPending === staff.id}
-                              className="size-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                        {isOwner && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled={isPending === staff.id}
+                                className="size-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                              >
+                                {isPending === staff.id ? (
+                                  <Loader2 className="size-4 animate-spin" />
+                                ) : (
+                                  <MoreHorizontal className="size-4" />
+                                )}
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="end"
+                              className="w-40 rounded-xl"
                             >
-                              {isPending === staff.id ? (
-                                <Loader2 className="size-4 animate-spin" />
+                              <DropdownMenuItem
+                                className="gap-2 font-medium cursor-pointer"
+                                onClick={() => setEditingEmployee(staff)}
+                              >
+                                <Edit2 className="size-3.5 text-zinc-500" />
+                                정보 수정
+                              </DropdownMenuItem>
+                              {!isResigned ? (
+                                <DropdownMenuItem
+                                  className="gap-2 font-medium text-orange-600 focus:text-orange-600 cursor-pointer"
+                                  onClick={() =>
+                                    handleResign(staff.id, staff.name)
+                                  }
+                                >
+                                  <UserMinus className="size-3.5" />
+                                  퇴사 처리
+                                </DropdownMenuItem>
                               ) : (
-                                <MoreHorizontal className="size-4" />
+                                <DropdownMenuItem
+                                  className="gap-2 font-medium text-emerald-600 focus:text-emerald-600 cursor-pointer"
+                                  onClick={() =>
+                                    handleRestore(staff.id, staff.name)
+                                  }
+                                >
+                                  <UserPlus className="size-3.5" />
+                                  재직으로 복구
+                                </DropdownMenuItem>
                               )}
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="end"
-                            className="w-40 rounded-xl"
-                          >
-                            <DropdownMenuItem
-                              className="gap-2 font-medium cursor-pointer"
-                              onClick={() => setEditingEmployee(staff)}
-                            >
-                              <Edit2 className="size-3.5 text-zinc-500" />
-                              정보 수정
-                            </DropdownMenuItem>
-                            {!isResigned ? (
-                              <DropdownMenuItem
-                                className="gap-2 font-medium text-orange-600 focus:text-orange-600 cursor-pointer"
-                                onClick={() =>
-                                  handleResign(staff.id, staff.name)
-                                }
-                              >
-                                <UserMinus className="size-3.5" />
-                                퇴사 처리
-                              </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem
-                                className="gap-2 font-medium text-emerald-600 focus:text-emerald-600 cursor-pointer"
-                                onClick={() =>
-                                  handleRestore(staff.id, staff.name)
-                                }
-                              >
-                                <UserPlus className="size-3.5" />
-                                재직으로 복구
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </TableCell>
                     </TableRow>
                   );

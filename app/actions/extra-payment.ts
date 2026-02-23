@@ -3,11 +3,15 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { startOfMonth, endOfMonth } from "date-fns";
+import { ActionResponse, ExtraPayment } from "@/types";
 
 /**
  * 월별 직원 지급 내역 조회
  */
-export async function getExtraPayments(year: number, month: number) {
+export async function getExtraPayments(
+  year: number,
+  month: number,
+): Promise<ActionResponse<ExtraPayment[]>> {
   try {
     const startDate = startOfMonth(new Date(year, month - 1));
     const endDate = endOfMonth(startDate);
@@ -23,7 +27,6 @@ export async function getExtraPayments(year: number, month: number) {
         employee: {
           select: {
             name: true,
-            role: true,
           },
         },
       },
@@ -47,7 +50,7 @@ export async function createExtraPayment(data: {
   type: "ADVANCE" | "BONUS";
   amount: number;
   date: Date;
-}) {
+}): Promise<ActionResponse<ExtraPayment>> {
   try {
     const payment = await prisma.extraPayment.create({
       data: {
@@ -56,6 +59,13 @@ export async function createExtraPayment(data: {
         amount: data.amount,
         date: data.date,
         isSettled: false, // 기본값: 미정산
+      },
+      include: {
+        employee: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
 
@@ -68,7 +78,7 @@ export async function createExtraPayment(data: {
     return { success: true, data: payment };
   } catch (error) {
     console.error("Failed to create extra payment:", error);
-    return { success: false, error: "지금 등록에 실패했습니다." };
+    return { success: false, error: "지급 등록에 실패했습니다." };
   }
 }
 
@@ -76,7 +86,7 @@ export async function createExtraPayment(data: {
  * 직원 지급 내역 삭제
  * - 이미 정산된(isSettled === true) 항목은 삭제 불가
  */
-export async function deleteExtraPayment(id: string) {
+export async function deleteExtraPayment(id: string): Promise<ActionResponse> {
   try {
     const payment = await prisma.extraPayment.findUnique({
       where: { id },

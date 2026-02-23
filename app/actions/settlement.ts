@@ -529,11 +529,16 @@ export async function getMonthlySettlementCandidates(
   }
 }
 
+import { validateOwner } from "@/lib/auth-util";
+
 /**
  * 정산 삭제
  */
 export async function deleteSettlement(id: string) {
   try {
+    const authCheck = await validateOwner();
+    if (!authCheck.success) return authCheck;
+
     const settlement = await prisma.settlement.findUnique({
       where: { id },
     });
