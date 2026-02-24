@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Header } from "@/components/dashboard/header";
 import {
   Banknote,
@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { SummaryCards } from "./components/SummaryCards";
 import { SalesTable } from "./components/SalesTable";
 import { SaleRegistrationDialog } from "./components/SaleRegistrationDialog";
-import { Course, Employee, SaleWithDetails } from "@/types";
+import { Course, Employee, SaleWithDetails, DailySummary } from "@/types";
 import { format, subDays, addDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -27,8 +27,8 @@ import { getDailySales, getDailySummary } from "@/app/actions/sales";
 import { toast } from "sonner";
 
 interface SalesPageClientProps {
-  initialSales: any[];
-  initialSummary: any;
+  initialSales: SaleWithDetails[];
+  initialSummary: DailySummary | null;
   courses: Course[];
   employees: Employee[];
 }
@@ -41,10 +41,11 @@ export function SalesPageClient({
 }: SalesPageClientProps) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [sales, setSales] = useState<SaleWithDetails[]>(initialSales);
-  const [summary, setSummary] = useState(initialSummary);
+  const [summary, setSummary] = useState<DailySummary | null>(initialSummary);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const isFirstRender = useRef(true);
 
   const fetchData = useCallback(async (date: Date) => {
     setLoading(true);
@@ -61,7 +62,7 @@ export function SalesPageClient({
       }
 
       if (summaryRes.success) {
-        setSummary(summaryRes.data);
+        setSummary(summaryRes.data as DailySummary | null);
       } else {
         toast.error("요약 정보를 불러오는데 실패했습니다.");
       }
@@ -72,7 +73,14 @@ export function SalesPageClient({
   }, []);
 
   useEffect(() => {
-    fetchData(currentDate);
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      fetchData(currentDate);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [currentDate, fetchData]);
 
   const handlePrevDay = () => setCurrentDate((prev) => subDays(prev, 1));

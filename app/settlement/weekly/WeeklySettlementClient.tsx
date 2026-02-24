@@ -27,56 +27,29 @@ import { format, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
 import { ko } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
-
-export interface SettlementItem {
-  therapist: {
-    id: string;
-    name: string;
-  };
-  salesCount: number;
-  totalCommission: number;
-  totalChoiceFee: number;
-  totalBonus: number;
-  totalAdvance: number;
-  netAmount: number;
-  isAlreadySettled: boolean;
-  settlementId?: string | null;
-  details: {
-    sales: {
-      id: string;
-      date: Date | string;
-      courseName: string;
-      amount: number;
-      isChoice?: boolean;
-    }[];
-    extras: {
-      id: string;
-      date: Date | string;
-      type: string;
-      amount: number;
-    }[];
-  };
-}
+import { WeeklySettlementItem, AuthUser } from "@/types";
 
 export function WeeklySettlementClient({
   initialData,
   initialDate,
 }: {
-  initialData: SettlementItem[];
+  initialData: WeeklySettlementItem[];
   initialDate?: string;
 }) {
   const { data: session } = authClient.useSession();
   const isOwner =
-    (session?.user as any)?.role === "admin" ||
-    (session?.user as any)?.role === "OWNER";
+    (session?.user as AuthUser)?.role === "admin" ||
+    (session?.user as AuthUser)?.role === "OWNER";
   const [mounted, setMounted] = useState(false);
   const [currentDate, setCurrentDate] = useState(
     initialDate ? new Date(initialDate) : new Date(),
   );
-  const [data, setData] = useState<SettlementItem[]>(initialData);
+  const [data, setData] = useState<WeeklySettlementItem[]>(initialData);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
-  const [selectedItem, setSelectedItem] = useState<SettlementItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<WeeklySettlementItem | null>(
+    null,
+  );
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   useEffect(() => {
@@ -101,7 +74,7 @@ export function WeeklySettlementClient({
     const range = getWeekRange(date);
     const result = await getWeeklySettlementData(range.start, range.end);
     if (result.success && result.data) {
-      setData(result.data as SettlementItem[]);
+      setData(result.data as WeeklySettlementItem[]);
     }
     setIsLoading(false);
   };
@@ -118,7 +91,7 @@ export function WeeklySettlementClient({
     fetchSettlementData(newDate);
   };
 
-  const handleSettlement = async (item: SettlementItem) => {
+  const handleSettlement = async (item: WeeklySettlementItem) => {
     if (!confirm(`${item.therapist.name} 관리사의 정산을 완료하시겠습니까?`))
       return;
 
@@ -148,7 +121,7 @@ export function WeeklySettlementClient({
     setIsProcessing(null);
   };
 
-  const handleDeleteSettlement = async (item: SettlementItem) => {
+  const handleDeleteSettlement = async (item: WeeklySettlementItem) => {
     if (!item.settlementId) return;
 
     if (

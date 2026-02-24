@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
@@ -70,7 +70,7 @@ interface SaleRegistrationDialogProps {
   courses: Course[];
   employees: Employee[];
   defaultDate?: Date;
-  onSuccess?: (data: any) => void;
+  onSuccess?: () => void;
 }
 
 export function SaleRegistrationDialog({
@@ -104,7 +104,14 @@ export function SaleRegistrationDialog({
   }, [open, defaultDate, form]);
 
   // 코스 선택 시 금액 및 관리사 슬롯 자동 조절
-  const watchCourseId = form.watch("courseId");
+  const watchCourseId = useWatch({
+    control: form.control,
+    name: "courseId",
+  });
+  const watchTherapists = useWatch({
+    control: form.control,
+    name: "therapists",
+  });
   useEffect(() => {
     if (watchCourseId) {
       const selectedCourse = courses.find((c) => c.id === watchCourseId);
@@ -135,7 +142,7 @@ export function SaleRegistrationDialog({
     if (result.success) {
       form.reset();
       onOpenChange(false);
-      onSuccess?.(result.data);
+      onSuccess?.();
     } else {
       alert(result.error);
     }
@@ -319,7 +326,7 @@ export function SaleRegistrationDialog({
                   </FormLabel>
 
                   <div className="space-y-3">
-                    {form.watch("therapists").map((_, index) => (
+                    {watchTherapists.map((_, index) => (
                       <div
                         key={index}
                         className="flex gap-3 items-end bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-2xl border border-zinc-100 dark:border-zinc-800"

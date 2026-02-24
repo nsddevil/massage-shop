@@ -575,7 +575,7 @@ export function ExpensesClient() {
               <Label className="font-bold text-zinc-500">지출 구분</Label>
               <RadioGroup
                 value={expenseType}
-                onValueChange={(val: any) => setExpenseType(val)}
+                onValueChange={(val: typeof expenseType) => setExpenseType(val)}
                 className="flex gap-4"
               >
                 <div className="flex items-center space-x-2">
@@ -674,7 +674,7 @@ export function ExpensesClient() {
               <Label className="font-bold text-zinc-500">지급 구분</Label>
               <RadioGroup
                 value={extraType}
-                onValueChange={(val: any) => setExtraType(val)}
+                onValueChange={(val: typeof extraType) => setExtraType(val)}
                 className="flex gap-4"
               >
                 <div className="flex items-center space-x-2">

@@ -2,14 +2,7 @@
 
 import { useState } from "react";
 import { Header } from "@/components/dashboard/header";
-import {
-  Wallet,
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  MoreHorizontal,
-  Info,
-} from "lucide-react";
+import { Wallet, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -36,30 +29,10 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
-
-interface SettlementCandidate {
-  employee: any;
-  period: { start: string | Date; end: string | Date };
-  stats: {
-    workedDays: number;
-    totalWorkHours: number;
-    periodTotalDays: number;
-  };
-  details: {
-    baseAmount: number;
-    mealAllowance: number;
-    bonusAmount: number;
-    advanceAmount: number;
-    totalAmount: number;
-  };
-  totalAmount: number;
-  extras: any[];
-  isSettled: boolean;
-  settlementId?: string;
-}
+import { MonthlySettlementCandidate, ExtraPayment } from "@/types";
 
 interface MonthlySettlementClientProps {
-  initialCandidates: any[]; // 구체적인 타입 정의 필요하지만 일단 any로 시작
+  initialCandidates: MonthlySettlementCandidate[];
   initialYear: number;
   initialMonth: number;
 }
@@ -70,12 +43,12 @@ export function MonthlySettlementClient({
   initialMonth,
 }: MonthlySettlementClientProps) {
   const [candidates, setCandidates] =
-    useState<SettlementCandidate[]>(initialCandidates);
+    useState<MonthlySettlementCandidate[]>(initialCandidates);
   const [year, setYear] = useState(initialYear);
   const [month, setMonth] = useState(initialMonth);
   const [loading, setLoading] = useState(false);
   const [selectedCandidate, setSelectedCandidate] =
-    useState<SettlementCandidate | null>(null);
+    useState<MonthlySettlementCandidate | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
@@ -138,7 +111,6 @@ export function MonthlySettlementClient({
   const handleConfirm = async () => {
     if (!selectedCandidate) return;
 
-    // eslint-disable-next-line no-restricted-globals
     if (
       !confirm(
         `${selectedCandidate.employee.name}님의 급여 정산을 확정하시겠습니까?\n확정 후에는 수정할 수 없습니다.`,
@@ -158,7 +130,7 @@ export function MonthlySettlementClient({
         workedDays: selectedCandidate.stats.workedDays,
         totalAmount: selectedCandidate.totalAmount,
         details: selectedCandidate.details,
-        extraIds: selectedCandidate.extras.map((ex: any) => ex.id),
+        extraIds: selectedCandidate.extras.map((ex: ExtraPayment) => ex.id),
       });
 
       if (result.success) {
@@ -168,7 +140,7 @@ export function MonthlySettlementClient({
       } else {
         toast.error((result.error as string) || "정산 확정에 실패했습니다.");
       }
-    } catch (error) {
+    } catch {
       toast.error("오류가 발생했습니다.");
     }
     setIsConfirming(false);
@@ -177,7 +149,6 @@ export function MonthlySettlementClient({
   const handleBatchSettle = async () => {
     if (selectedIds.length === 0) return;
 
-    // eslint-disable-next-line no-restricted-globals
     if (
       !confirm(
         `선택한 ${selectedIds.length}명의 급여 정산을 일괄 확정하시겠습니까?\n확정 후에는 수정할 수 없습니다.`,
@@ -204,7 +175,7 @@ export function MonthlySettlementClient({
           workedDays: candidate.stats.workedDays,
           totalAmount: candidate.totalAmount,
           details: candidate.details,
-          extraIds: candidate.extras.map((ex: any) => ex.id),
+          extraIds: candidate.extras.map((ex: ExtraPayment) => ex.id),
         });
 
         if (result.success) successCount++;
@@ -378,7 +349,6 @@ export function MonthlySettlementClient({
                           employee,
                           period,
                           stats,
-                          details,
                           totalAmount,
                           isSettled,
                         } = candidate;
@@ -499,108 +469,113 @@ export function MonthlySettlementClient({
         onOpenChange={(open) => !open && setSelectedCandidate(null)}
       >
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              급여 상세 내역{" "}
-              {selectedCandidate?.employee.payStartDay > 1
-                ? `(기준일: ${selectedCandidate?.employee.payStartDay}일)`
-                : ""}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedCandidate?.employee.name}님의 {month}월 귀속 급여
-              내역입니다.
-            </DialogDescription>
-          </DialogHeader>
-
           {selectedCandidate && (
-            <div className="space-y-5 py-4">
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-zinc-500">기본 근무 수당</span>
-                  <span className="font-medium">
-                    ₩ {selectedCandidate.details.baseAmount.toLocaleString()}
-                  </span>
-                </div>
-                {selectedCandidate.details.mealAllowance > 0 && (
+            <>
+              <DialogHeader>
+                <DialogTitle>
+                  급여 상세 내역{" "}
+                  {selectedCandidate.employee.payStartDay > 1
+                    ? `(기준일: ${selectedCandidate.employee.payStartDay}일)`
+                    : ""}
+                </DialogTitle>
+                <DialogDescription>
+                  {selectedCandidate.employee.name}님의 {month}월 귀속 급여
+                  내역입니다.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-5 py-4">
+                <div className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-zinc-500">
-                      식대 ({selectedCandidate.stats.workedDays}일)
-                    </span>
+                    <span className="text-zinc-500">기본 근무 수당</span>
                     <span className="font-medium">
-                      ₩{" "}
-                      {selectedCandidate.details.mealAllowance.toLocaleString()}
+                      ₩ {selectedCandidate.details.baseAmount.toLocaleString()}
                     </span>
                   </div>
-                )}
-                {selectedCandidate.details.bonusAmount > 0 && (
-                  <div className="flex justify-between text-sm text-emerald-600">
-                    <span>
-                      보너스 (
-                      {
-                        selectedCandidate.extras.filter(
-                          (e: any) => e.type === "BONUS",
-                        ).length
-                      }
-                      건)
-                    </span>
-                    <span className="font-bold">
-                      + ₩{" "}
-                      {selectedCandidate.details.bonusAmount.toLocaleString()}
+                  {selectedCandidate.details.mealAllowance > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-zinc-500">
+                        식대 ({selectedCandidate.stats.workedDays}일)
+                      </span>
+                      <span className="font-medium">
+                        ₩{" "}
+                        {selectedCandidate.details.mealAllowance.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                  {selectedCandidate.details.bonusAmount > 0 && (
+                    <div className="flex justify-between text-sm text-emerald-600">
+                      <span>
+                        보너스 (
+                        {
+                          selectedCandidate.extras.filter(
+                            (e) => e.type === "BONUS",
+                          ).length
+                        }
+                        건)
+                      </span>
+                      <span className="font-bold">
+                        + ₩{" "}
+                        {selectedCandidate.details.bonusAmount.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                  {selectedCandidate.details.advanceAmount > 0 && (
+                    <div className="flex justify-between text-sm text-red-600">
+                      <span>
+                        가불금 공제 (
+                        {
+                          selectedCandidate.extras.filter(
+                            (e) => e.type === "ADVANCE",
+                          ).length
+                        }
+                        건)
+                      </span>
+                      <span className="font-bold">
+                        - ₩{" "}
+                        {selectedCandidate.details.advanceAmount.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
+                  <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-2" />
+                  <div className="flex justify-between font-bold text-xl pt-1">
+                    <span>실 지급액</span>
+                    <span className="text-blue-600">
+                      ₩ {selectedCandidate.totalAmount.toLocaleString()}
                     </span>
                   </div>
-                )}
-                {selectedCandidate.details.advanceAmount > 0 && (
-                  <div className="flex justify-between text-sm text-red-600">
-                    <span>
-                      가불금 공제 (
-                      {
-                        selectedCandidate.extras.filter(
-                          (e: any) => e.type === "ADVANCE",
-                        ).length
-                      }
-                      건)
-                    </span>
-                    <span className="font-bold">
-                      - ₩{" "}
-                      {selectedCandidate.details.advanceAmount.toLocaleString()}
-                    </span>
-                  </div>
-                )}
-                <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-2" />
-                <div className="flex justify-between font-bold text-xl pt-1">
-                  <span>실 지급액</span>
-                  <span className="text-blue-600">
-                    ₩ {selectedCandidate.totalAmount.toLocaleString()}
-                  </span>
                 </div>
-              </div>
 
-              <div className="bg-zinc-50 dark:bg-zinc-900 p-3 rounded-lg text-xs text-zinc-500 space-y-1">
-                <div>
-                  • 귀속 기간:{" "}
-                  {format(
-                    new Date(selectedCandidate.period.start),
-                    "yyyy.MM.dd",
-                  )}{" "}
-                  ~{" "}
-                  {format(new Date(selectedCandidate.period.end), "yyyy.MM.dd")}
+                <div className="bg-zinc-50 dark:bg-zinc-900 p-3 rounded-lg text-xs text-zinc-500 space-y-1">
+                  <div>
+                    • 귀속 기간:{" "}
+                    {format(
+                      new Date(selectedCandidate.period.start),
+                      "yyyy.MM.dd",
+                    )}{" "}
+                    ~{" "}
+                    {format(
+                      new Date(selectedCandidate.period.end),
+                      "yyyy.MM.dd",
+                    )}
+                  </div>
+                  <div>
+                    • 총 근무:{" "}
+                    {selectedCandidate.employee.role === "STAFF"
+                      ? `${selectedCandidate.stats.totalWorkHours}시간`
+                      : `${selectedCandidate.stats.workedDays}일`}
+                  </div>
                 </div>
-                <div>
-                  • 총 근무:{" "}
-                  {selectedCandidate.employee.role === "STAFF"
-                    ? `${selectedCandidate.stats.totalWorkHours}시간`
-                    : `${selectedCandidate.stats.workedDays}일`}
-                </div>
-              </div>
 
-              <Button
-                className="w-full h-11 text-base font-bold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 dark:shadow-none"
-                onClick={handleConfirm}
-                disabled={isConfirming}
-              >
-                {isConfirming ? "처리 중..." : "정산 확정하기"}
-              </Button>
-            </div>
+                <Button
+                  className="w-full h-11 text-base font-bold bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 dark:shadow-none"
+                  onClick={handleConfirm}
+                  disabled={isConfirming}
+                >
+                  {isConfirming ? "처리 중..." : "정산 확정하기"}
+                </Button>
+              </div>
+            </>
           )}
         </DialogContent>
       </Dialog>

@@ -32,3 +32,48 @@ export interface SettlementWithEmployee extends Settlement {
     role: string;
   };
 }
+
+export interface WeeklySettlementItem {
+  therapist: {
+    id: string;
+    name: string;
+  };
+  salesCount: number;
+  totalCommission: number;
+  totalChoiceFee: number;
+  totalBonus: number;
+  totalAdvance: number;
+  netAmount: number;
+  isAlreadySettled: boolean;
+  settlementId?: string | null;
+  details: {
+    sales: {
+      id: string;
+      date: Date | string;
+      courseName: string;
+      amount: number;
+      isChoice?: boolean;
+    }[];
+    extras: {
+      id: string;
+      date: Date | string;
+      type: string;
+      amount: number;
+    }[];
+  };
+}
+
+export interface MonthlySettlementCandidate {
+  employee: Employee;
+  period: { start: string | Date; end: string | Date };
+  stats: {
+    workedDays: number;
+    totalWorkHours: number;
+    periodTotalDays: number;
+  };
+  details: SalaryCalculationDetail;
+  totalAmount: number;
+  extras: ExtraPayment[];
+  isSettled: boolean;
+  settlementId?: string;
+}

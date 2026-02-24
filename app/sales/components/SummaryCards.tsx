@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { PAY_METHOD_LABELS, PayMethod } from "@/types";
+import { PAY_METHOD_LABELS, PayMethod, DailySummary } from "@/types";
 import { cn } from "@/lib/utils";
 import {
   Wallet,
@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 interface SummaryCardsProps {
-  summary: Record<string, number> | null;
+  summary: DailySummary | null;
 }
 
 const METHOD_ICONS: Record<string, LucideIcon> = {

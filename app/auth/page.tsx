@@ -99,7 +99,7 @@ export default function AuthPage() {
       <Card className="w-[400px]">
         <CardHeader>
           <CardTitle>{isSignUp ? "회원가입" : "로그인"}</CardTitle>
-          <CardDescription>인증 시스템 테스트용 페이지입니다.</CardDescription>
+          <CardDescription>Massage Shop</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {isSignUp && (

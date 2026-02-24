@@ -11,11 +11,12 @@ import { ko } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { WeeklySettlementItem } from "@/types";
 
 interface SettlementDetailDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  data: any;
+  data: WeeklySettlementItem | null;
 }
 
 export function SettlementDetailDialog({
@@ -53,7 +54,7 @@ export function SettlementDetailDialog({
                 </span>
               </h4>
               <div className="space-y-2">
-                {data.details.sales.map((sale: any, idx: number) => (
+                {data.details.sales.map((sale, idx) => (
                   <div
                     key={idx}
                     className="flex items-center justify-between p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800/50"
@@ -92,7 +93,7 @@ export function SettlementDetailDialog({
                 <p className="text-xs text-zinc-400 italic">내역이 없습니다.</p>
               ) : (
                 <div className="space-y-2">
-                  {data.details.extras.map((extra: any, idx: number) => (
+                  {data.details.extras.map((extra, idx) => (
                     <div
                       key={idx}
                       className="flex items-center justify-between p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800/50"

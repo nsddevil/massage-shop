@@ -50,3 +50,12 @@ export interface SaleWithDetails {
   }[];
   createdAt: Date;
 }
+
+export interface DailySummary {
+  CASH: number;
+  TRANSFER: number;
+  CARD: number;
+  HEELY: number;
+  MATONG: number;
+  total: number;
+}
