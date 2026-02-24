@@ -21,7 +21,6 @@ export default async function CommutePage() {
       <CommutePageClient
         initialData={data || []}
         businessDate={businessDate || now}
-        initialDate={now.toISOString()}
       />
     </div>
   );

@@ -41,11 +41,9 @@ interface EmployeeStatus {
 export function CommutePageClient({
   initialData,
   businessDate,
-  initialDate,
 }: {
   initialData: EmployeeStatus[];
   businessDate: Date;
-  initialDate?: string;
 }) {
   const [data, setData] = useState<EmployeeStatus[]>(initialData);
   const [selectedEmp, setSelectedEmp] = useState<EmployeeStatus | null>(null);

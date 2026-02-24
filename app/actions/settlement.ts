@@ -101,7 +101,6 @@ export async function calculateSalaryAction(
     let mealAllowance = 0;
     let bonusAmount = 0;
     let advanceAmount = 0;
-    let roleType: EmployeeSettlementRole = "REGULAR";
 
     // 보너스/가불 합산
     extras.forEach((ex) => {
@@ -110,19 +109,14 @@ export async function calculateSalaryAction(
     });
 
     if (employee.role === "STAFF" || employee.role === "OWNER") {
-      roleType = employee.role === "STAFF" ? "STAFF" : "REGULAR";
       // 시급제: (시간 * 시급) + (일수 * 식대)
       baseAmount = Math.floor(totalWorkHours * (employee.hourlyRate || 0));
       mealAllowance = workedDays * (employee.mealAllowance || 0);
     } else {
-      roleType = "REGULAR";
       // 정규직: (기본급 / 기간총일수) * 실제근무일수
       const dailyRate = (employee.baseSalary || 0) / periodTotalDays;
       baseAmount = Math.floor(dailyRate * workedDays);
     }
-
-    // RoleType 정비: 사장은 REGULAR로 취급하되 계산만 시급제로 할 수 있게 함
-    // (이후 UI에서 roleType 보다는 employee.role을 직접 쓰는게 정확함)
 
     const totalAmount =
       baseAmount + mealAllowance + bonusAmount - advanceAmount;

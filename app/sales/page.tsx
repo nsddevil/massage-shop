@@ -1,10 +1,6 @@
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { SalesPageClient } from "./SalesPageClient";
-import {
-  getRecentSales,
-  getDailySummary,
-  getDailySales,
-} from "@/app/actions/sales";
+import { getDailySummary, getDailySales } from "@/app/actions/sales";
 import { getCourses } from "@/app/actions/course";
 import { getEmployees } from "@/app/actions/staff";
 
