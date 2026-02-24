@@ -1,6 +1,6 @@
 import { auth } from "./auth";
 import { headers } from "next/headers";
-import { AuthUser } from "@/types";
+import { AuthUser, ActionResponse } from "@/types";
 
 /**
  * 현재 로그인한 사용자의 세션을 가져옵니다.
@@ -26,7 +26,7 @@ export async function isOwner() {
 /**
  * 사장 권한이 필요한 동작에서 권한을 검증하고 실패 시 에러 객체를 반환합니다.
  */
-export async function validateOwner() {
+export async function validateOwner(): Promise<ActionResponse> {
   const owner = await isOwner();
   if (!owner) {
     return {

@@ -1,6 +1,7 @@
 import { getMonthlyFinance } from "@/app/actions/finance";
 import { Sidebar } from "@/components/dashboard/sidebar";
-import { FinancePageClient, FinanceData } from "./FinancePageClient";
+import { FinancePageClient } from "./FinancePageClient";
+import { FinanceData } from "@/types";
 import { unstable_noStore as noStore } from "next/cache";
 import { kst } from "@/lib/date";
 

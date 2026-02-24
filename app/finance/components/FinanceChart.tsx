@@ -28,8 +28,10 @@ export function FinanceChart({ data }: FinanceChartProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const frame = requestAnimationFrame(() => setMounted(true));
-    return () => cancelAnimationFrame(frame);
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   return (

@@ -39,8 +39,10 @@ export function FinancePageClient({
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const frame = requestAnimationFrame(() => setMounted(true));
-    return () => cancelAnimationFrame(frame);
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const fetchFinanceData = async (date: Date) => {
