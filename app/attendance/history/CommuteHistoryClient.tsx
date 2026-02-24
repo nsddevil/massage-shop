@@ -55,7 +55,7 @@ import {
   deleteCommuteRecord,
 } from "@/app/actions/commute";
 import { getEmployees } from "@/app/actions/staff";
-import { Employee, ROLE_LABELS } from "@/types";
+import { Employee, ROLE_LABELS, AuthUser } from "@/types";
 import { kst } from "@/lib/date";
 
 interface CommuteRecord {
@@ -74,8 +74,8 @@ interface CommuteRecord {
 export function CommuteHistoryClient() {
   const { data: session } = authClient.useSession();
   const isOwner =
-    (session?.user as any)?.role === "admin" ||
-    (session?.user as any)?.role === "OWNER";
+    (session?.user as AuthUser)?.role === "admin" ||
+    (session?.user as AuthUser)?.role === "OWNER";
   const searchParams = useSearchParams();
   const initialEmployeeId = searchParams.get("employeeId") || "ALL";
 
@@ -85,6 +85,14 @@ export function CommuteHistoryClient() {
   const [selectedEmployeeId, setSelectedEmployeeId] =
     useState(initialEmployeeId);
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   // 수정 다이얼로그 상태
   const [selectedRecord, setSelectedRecord] = useState<CommuteRecord | null>(
@@ -95,6 +103,7 @@ export function CommuteHistoryClient() {
   const [editClockOut, setEditClockOut] = useState("");
 
   const fetchHistory = useCallback(async () => {
+    await Promise.resolve(); // Cascading render 방지
     setLoading(true);
     const startDate = startOfMonth(currentDate);
     const endDate = endOfMonth(currentDate);
@@ -109,19 +118,23 @@ export function CommuteHistoryClient() {
   }, [currentDate, selectedEmployeeId]);
 
   const fetchEmployees = useCallback(async () => {
+    await Promise.resolve(); // Cascading render 방지
     const res = await getEmployees({ includeResigned: true });
     if (res.success && res.data) {
       setEmployees(res.data as Employee[]);
     }
   }, []);
 
+  // 초기 데이터 로드
   useEffect(() => {
-    fetchEmployees();
-  }, [fetchEmployees]);
-
-  useEffect(() => {
-    fetchHistory();
-  }, [fetchHistory]);
+    if (mounted) {
+      const timer = setTimeout(() => {
+        fetchEmployees();
+        fetchHistory();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [mounted, fetchEmployees, fetchHistory]);
 
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
