@@ -125,9 +125,11 @@ export function SalesTable({
                         {PAY_METHOD_LABELS[sale.payMethod]}
                       </Badge>
                       <span className="text-[10px] text-zinc-400 font-medium">
-                        {format(new Date(sale.createdAt), "MM.dd HH:mm", {
+                        {format(new Date(sale.createdAt), "MM.dd", {
                           locale: ko,
-                        })}
+                        })}{" "}
+                        {sale.startTime && format(new Date(sale.startTime), "HH:mm")}
+                        {sale.endTime && ` ~ ${format(new Date(sale.endTime), "HH:mm")}`}
                       </span>
                     </div>
                   </div>
@@ -210,10 +212,14 @@ export function SalesTable({
                     key={sale.id}
                     className="border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 transition-colors"
                   >
-                    <TableCell className="pl-6 py-4 font-medium text-zinc-400 text-xs">
-                      {format(new Date(sale.createdAt), "MM.dd HH:mm", {
+                    <TableCell className="pl-6 py-4 font-medium text-zinc-400 text-xs text-nowrap">
+                      {format(new Date(sale.createdAt), "MM.dd", {
                         locale: ko,
-                      })}
+                      })}{" "}
+                      <span className="text-zinc-900 dark:text-zinc-100 font-bold">
+                        {sale.startTime && format(new Date(sale.startTime), "HH:mm")}
+                        {sale.endTime && ` ~ ${format(new Date(sale.endTime), "HH:mm")}`}
+                      </span>
                     </TableCell>
                     <TableCell className="font-bold text-zinc-900 dark:text-zinc-100">
                       {sale.course.name}

@@ -62,6 +62,8 @@ const formSchema = z.object({
     )
     .min(1, "최소 한 명의 관리사를 선택해주세요."),
   createdAt: z.date(),
+  startTime: z.string().min(1, "시작 시간을 입력해주세요."),
+  endTime: z.string().min(1, "종료 시간을 입력해주세요."),
 });
 
 interface SaleEditDialogProps {
@@ -97,6 +99,8 @@ export function SaleEditDialog({
         isChoice: t.isChoice,
       })),
       createdAt: new Date(sale.createdAt),
+      startTime: sale.startTime ? format(new Date(sale.startTime), "HH:mm") : "",
+      endTime: sale.endTime ? format(new Date(sale.endTime), "HH:mm") : "",
     },
   });
 
@@ -112,6 +116,10 @@ export function SaleEditDialog({
           isChoice: t.isChoice,
         })),
         createdAt: new Date(sale.createdAt),
+        startTime: sale.startTime
+          ? format(new Date(sale.startTime), "HH:mm")
+          : "",
+        endTime: sale.endTime ? format(new Date(sale.endTime), "HH:mm") : "",
       });
     }
   }, [open, sale, form]);
@@ -125,11 +133,25 @@ export function SaleEditDialog({
     control: form.control,
     name: "therapists",
   });
+  const watchStartTime = useWatch({
+    control: form.control,
+    name: "startTime",
+  });
+
   useEffect(() => {
     if (watchCourseId && watchCourseId !== sale.courseId) {
       const selectedCourse = courses.find((c) => c.id === watchCourseId);
       if (selectedCourse) {
         form.setValue("totalPrice", selectedCourse.price);
+
+        // 종료 시간 자동 계산 (코스 변경 시)
+        if (watchStartTime) {
+          const [hours, minutes] = watchStartTime.split(":").map(Number);
+          const start = new Date();
+          start.setHours(hours, minutes, 0, 0);
+          const end = new Date(start.getTime() + selectedCourse.duration * 60000);
+          form.setValue("endTime", format(end, "HH:mm"));
+        }
 
         if (selectedCourse.type === "DOUBLE") {
           const currentTherapists = form.getValues("therapists");
@@ -144,13 +166,30 @@ export function SaleEditDialog({
         }
       }
     }
-  }, [watchCourseId, courses, form, sale.courseId]);
+  }, [watchCourseId, watchStartTime, courses, form, sale.courseId]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+
+    const combineDateTime = (date: Date, timeStr: string) => {
+      const [hours, minutes] = timeStr.split(":").map(Number);
+      const newDate = new Date(date);
+      newDate.setHours(hours, minutes, 0, 0);
+      return newDate;
+    };
+
+    const startTime = combineDateTime(values.createdAt, values.startTime);
+    const endTime = combineDateTime(values.createdAt, values.endTime);
+
+    if (endTime < startTime) {
+      endTime.setDate(endTime.getDate() + 1);
+    }
+
     const result = await updateSale({
       id: sale.id,
       ...values,
+      startTime,
+      endTime,
     });
     setIsLoading(false);
 
@@ -231,6 +270,50 @@ export function SaleEditDialog({
                     </FormItem>
                   )}
                 />
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* 시작 시간 */}
+                  <FormField
+                    control={form.control}
+                    name="startTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-zinc-700 dark:text-zinc-300">
+                          시작 시간
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="time"
+                            className="h-12 rounded-xl border-zinc-200 dark:border-zinc-800 font-bold focus-visible:ring-blue-500"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* 종료 시간 */}
+                  <FormField
+                    control={form.control}
+                    name="endTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-zinc-700 dark:text-zinc-300">
+                          종료 시간
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="time"
+                            className="h-12 rounded-xl border-zinc-200 dark:border-zinc-800 font-bold focus-visible:ring-blue-500"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 {/* 코스 선택 */}
                 <FormField

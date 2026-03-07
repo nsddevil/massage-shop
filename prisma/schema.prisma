@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
@@ -156,8 +156,10 @@ model Course {
   name     String
   type     CourseType
   duration Int
-  price    Int
-  isActive Boolean    @default(true)
+  price            Int
+  commissionSingle Int        @default(0) // 1인 이용 시 커미션
+  commissionDouble Int        @default(0) // 2인 이용 시 커미션 (인당)
+  isActive         Boolean    @default(true)
   sales    Sale[]
 
   createdAt DateTime @default(now())
@@ -179,6 +181,8 @@ model Sale {
   course     Course    @relation(fields: [courseId], references: [id])
   payMethod  PayMethod
   totalPrice Int
+  startTime  DateTime?
+  endTime    DateTime?
 
   therapists SaleTherapist[]
 

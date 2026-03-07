@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { validateOwner } from "@/lib/auth-util";
-import { CreateSaleInput, UpdateSaleInput } from "@/types";
+import { CreateSaleInput, UpdateSaleInput, Course } from "@/types";
 import { kst } from "@/lib/date";
 
 /**
@@ -13,30 +13,16 @@ import { kst } from "@/lib/date";
  * 초이스 수당: +2000원
  */
 function calculateCommission(
-  courseType: "SINGLE" | "DOUBLE",
-  duration: number,
-  totalPrice: number,
+  course: Course,
+  therapistsCount: number,
   isChoice: boolean,
 ) {
-  let commissionAmount = 0;
   const choiceFee = isChoice ? 2000 : 0;
+  // 관리사 수에 따라 1인/2인 커미션 결정
+  const baseCommission =
+    therapistsCount >= 2 ? course.commissionDouble : course.commissionSingle;
 
-  if (courseType === "SINGLE") {
-    // 1인 코스: 결제 금액의 10% (소수점 절사)
-    commissionAmount = Math.floor(totalPrice * 0.1);
-  } else {
-    // 2인 코스: 시간별 고정 금액
-    if (duration <= 60) {
-      commissionAmount = 6000;
-    } else if (duration <= 80) {
-      commissionAmount = 8000;
-    } else {
-      // 80분 초과 시에도 8000원 또는 별도 로직 (현재는 8000원 기준)
-      commissionAmount = 8000;
-    }
-  }
-
-  return { commissionAmount, choiceFee };
+  return { commissionAmount: baseCommission, choiceFee };
 }
 
 export async function createSale(data: CreateSaleInput) {
@@ -59,15 +45,17 @@ export async function createSale(data: CreateSaleInput) {
           payMethod: data.payMethod,
           totalPrice: data.totalPrice,
           createdAt: data.createdAt,
+          startTime: data.startTime,
+          endTime: data.endTime,
         },
       });
 
       // 2. 관리사별 커미션 기록 생성
+      const therapistsCount = data.therapists.length;
       for (const t of data.therapists) {
         const { commissionAmount, choiceFee } = calculateCommission(
-          course.type,
-          course.duration,
-          data.totalPrice,
+          course,
+          therapistsCount,
           t.isChoice,
         );
 
@@ -119,6 +107,8 @@ export async function updateSale(data: UpdateSaleInput) {
           payMethod: data.payMethod,
           totalPrice: data.totalPrice,
           createdAt: data.createdAt,
+          startTime: data.startTime,
+          endTime: data.endTime,
         },
       });
 
@@ -128,11 +118,11 @@ export async function updateSale(data: UpdateSaleInput) {
       });
 
       // 2-3. 새 관리사별 커미션 기록 생성
+      const therapistsCount = data.therapists.length;
       for (const t of data.therapists) {
         const { commissionAmount, choiceFee } = calculateCommission(
-          course.type,
-          course.duration,
-          data.totalPrice,
+          course,
+          therapistsCount,
           t.isChoice,
         );
 
@@ -226,7 +216,7 @@ export async function getRecentSales(limit: number = 20) {
   try {
     const sales = await prisma.sale.findMany({
       take: limit,
-      orderBy: { createdAt: "desc" },
+      orderBy: { startTime: "desc" },
       include: {
         course: true,
         therapists: {
@@ -259,7 +249,7 @@ export async function getDailySales(date: Date = kst.nowKST()) {
           lte: end,
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { startTime: "desc" }, // 최신 시작 시간 우선 정렬
       include: {
         course: true,
         therapists: {

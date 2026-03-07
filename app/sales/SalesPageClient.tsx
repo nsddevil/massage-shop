@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { Header } from "@/components/dashboard/header";
 import {
   Banknote,
@@ -23,10 +23,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { getDailySales, getDailySummary } from "@/app/actions/sales";
-import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface SalesPageClientProps {
+  initialDate: Date;
   initialSales: SaleWithDetails[];
   initialSummary: DailySummary | null;
   courses: Course[];
@@ -34,61 +34,35 @@ interface SalesPageClientProps {
 }
 
 export function SalesPageClient({
+  initialDate,
   initialSales,
   initialSummary,
   courses,
   employees,
 }: SalesPageClientProps) {
-  const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [sales, setSales] = useState<SaleWithDetails[]>(initialSales);
-  const [summary, setSummary] = useState<DailySummary | null>(initialSummary);
+  const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const isFirstRender = useRef(true);
 
-  const fetchData = useCallback(async (date: Date) => {
-    setLoading(true);
-    try {
-      const [salesRes, summaryRes] = await Promise.all([
-        getDailySales(date),
-        getDailySummary(date),
-      ]);
+  // 데이터 페칭 함수 (필요 시 수동 호출용 - 예: 등록 성공 후)
+  const refreshData = useCallback(() => {
+    router.refresh();
+  }, [router]);
 
-      if (salesRes.success) {
-        setSales(salesRes.data as unknown as SaleWithDetails[]);
-      } else {
-        toast.error("매출 내역을 불러오는데 실패했습니다.");
-      }
+  const handlePrevDay = () => {
+    const nextDate = subDays(initialDate, 1);
+    router.push(`?date=${format(nextDate, "yyyy-MM-dd")}`);
+  };
 
-      if (summaryRes.success) {
-        setSummary(summaryRes.data as DailySummary | null);
-      } else {
-        toast.error("요약 정보를 불러오는데 실패했습니다.");
-      }
-    } catch {
-      toast.error("데이터 로딩 중 오류가 발생했습니다.");
-    }
-    setLoading(false);
-  }, []);
+  const handleNextDay = () => {
+    const nextDate = addDays(initialDate, 1);
+    router.push(`?date=${format(nextDate, "yyyy-MM-dd")}`);
+  };
 
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    const timer = setTimeout(() => {
-      fetchData(currentDate);
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [currentDate, fetchData]);
-
-  const handlePrevDay = () => setCurrentDate((prev) => subDays(prev, 1));
-  const handleNextDay = () => setCurrentDate((prev) => addDays(prev, 1));
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
-      setCurrentDate(date);
       setIsCalendarOpen(false);
+      router.push(`?date=${format(date, "yyyy-MM-dd")}`);
     }
   };
 
@@ -123,17 +97,17 @@ export function SalesPageClient({
                       variant="ghost"
                       className={cn(
                         "w-[140px] justify-center text-left font-bold text-lg",
-                        !currentDate && "text-muted-foreground",
+                        !initialDate && "text-muted-foreground",
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {format(currentDate, "yyyy.MM.dd")}
+                      {format(initialDate, "yyyy.MM.dd")}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="center">
                     <Calendar
                       mode="single"
-                      selected={currentDate}
+                      selected={initialDate}
                       onSelect={handleDateSelect}
                       initialFocus
                     />
@@ -157,37 +131,22 @@ export function SalesPageClient({
 
           {/* Summary Cards Section */}
           <section className="relative">
-            {loading && (
-              <div className="absolute inset-0 bg-white/50 dark:bg-black/50 z-10 flex items-center justify-center rounded-xl backdrop-blur-sm">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
-              </div>
-            )}
-            <SummaryCards summary={summary} />
+            <SummaryCards summary={initialSummary} />
           </section>
 
           {/* Daily Sales Section */}
           <section className="space-y-4 relative">
-            {loading && (
-              <div className="absolute inset-0 bg-white/50 dark:bg-black/50 z-10 flex items-center justify-center rounded-xl backdrop-blur-sm">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
-                  <span className="text-sm font-bold text-emerald-600">
-                    내역 불러오는 중...
-                  </span>
-                </div>
-              </div>
-            )}
             <div className="flex items-center gap-2">
               <History className="size-5 text-zinc-400" />
               <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                {format(currentDate, "MM월 dd일")} 매출 내역
+                {format(initialDate, "MM월 dd일")} 매출 내역
               </h2>
             </div>
             <SalesTable
-              sales={sales}
+              sales={initialSales}
               courses={courses}
               employees={employees}
-              onSuccess={() => fetchData(currentDate)}
+              onSuccess={refreshData}
             />
           </section>
         </div>
@@ -198,11 +157,8 @@ export function SalesPageClient({
         onOpenChange={setIsDialogOpen}
         courses={courses}
         employees={employees}
-        defaultDate={currentDate}
-        onSuccess={() => {
-          // 현재 날짜 데이터 다시 불러오기
-          fetchData(currentDate);
-        }}
+        defaultDate={initialDate}
+        onSuccess={refreshData}
       />
     </div>
   );

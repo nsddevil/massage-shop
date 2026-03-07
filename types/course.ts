@@ -1,4 +1,4 @@
-import { CourseType } from "@/generated/prisma/enums";
+import { CourseType } from "@/generated/prisma";
 export { CourseType };
 
 export interface Course {
@@ -7,6 +7,8 @@ export interface Course {
   type: CourseType;
   duration: number; // 소요 시간 (분)
   price: number; // 금액
+  commissionSingle: number; // 1인 이용 시 커미션
+  commissionDouble: number; // 2인 이용 시 커미션 (인당)
   isActive: boolean; // 활성화 여부
   createdAt: Date;
   updatedAt: Date;

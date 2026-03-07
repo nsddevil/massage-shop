@@ -147,7 +147,7 @@ export async function getRecentSales() {
   try {
     const sales = await prisma.sale.findMany({
       take: 5,
-      orderBy: { createdAt: "desc" },
+      orderBy: { startTime: "desc" },
       include: {
         course: true,
         therapists: {
@@ -163,7 +163,7 @@ export async function getRecentSales() {
       data: sales.map((sale) => ({
         id: sale.id,
         date: kst.format(sale.createdAt, "MM/dd"),
-        time: kst.format(sale.createdAt, "HH:mm"),
+        time: kst.format(sale.startTime || sale.createdAt, "HH:mm"),
         course: sale.course.name,
         staff: {
           name: sale.therapists[0]?.employee.name || "N/A",

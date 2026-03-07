@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, Resolver } from "react-hook-form";
+import { useForm, Resolver, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2, BookOpen, Clock, Wallet, Users, Edit2 } from "lucide-react";
 import { Course, CourseType, COURSE_TYPE_LABELS } from "@/types";
+import { cn } from "@/lib/utils";
 import { updateCourse } from "@/app/actions/course";
 import {
   Dialog,
@@ -36,6 +37,8 @@ const formSchema = z.object({
   type: z.nativeEnum(CourseType),
   duration: z.coerce.number().min(1, "소요 시간을 입력해주세요."),
   price: z.coerce.number().min(0, "금액을 입력해주세요."),
+  commissionSingle: z.coerce.number().min(0, "1인 커미션을 입력해주세요."),
+  commissionDouble: z.coerce.number().min(0, "2인 커미션을 입력해주세요."),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -60,7 +63,14 @@ export function CourseEditDialog({
       type: course.type,
       duration: course.duration,
       price: course.price,
+      commissionSingle: course.commissionSingle,
+      commissionDouble: course.commissionDouble,
     },
+  });
+
+  const watchType = useWatch({
+    control: form.control,
+    name: "type",
   });
 
   async function onSubmit(values: FormValues) {
@@ -71,6 +81,8 @@ export function CourseEditDialog({
       type: values.type,
       duration: values.duration,
       price: values.price,
+      commissionSingle: values.commissionSingle,
+      commissionDouble: values.commissionDouble,
     });
     setIsPending(false);
 
@@ -213,6 +225,64 @@ export function CourseEditDialog({
                   </FormItem>
                 )}
               />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="commissionSingle"
+                  render={({ field }) => (
+                    <FormItem className={cn(watchType === CourseType.SINGLE ? "col-span-2" : "col-span-1")}>
+                      <FormLabel className="text-xs font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
+                        <Wallet className="size-3" />
+                        1인 이용 시 커미션 (원)
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            {...field}
+                            className="h-12 bg-zinc-50 dark:bg-zinc-800 border-none focus-visible:ring-2 focus-visible:ring-blue-600 rounded-xl font-bold pr-10"
+                          />
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400">
+                            원
+                          </span>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {watchType === CourseType.DOUBLE && (
+                  <FormField
+                    control={form.control}
+                    name="commissionDouble"
+                    render={({ field }) => (
+                      <FormItem className="col-span-1">
+                        <FormLabel className="text-xs font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
+                          <Wallet className="size-3" />
+                          2인 이용 시 (인당/원)
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              placeholder="0"
+                              {...field}
+                              className="h-12 bg-zinc-50 dark:bg-zinc-800 border-none focus-visible:ring-2 focus-visible:ring-blue-600 rounded-xl font-bold pr-10"
+                            />
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400">
+                              원
+                            </span>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
             </div>
 
             <div className="flex gap-3 pt-2">

@@ -62,6 +62,8 @@ const formSchema = z.object({
     )
     .min(1, "최소 한 명의 관리사를 선택해주세요."),
   createdAt: z.date(),
+  startTime: z.string().min(1, "시작 시간을 입력해주세요."),
+  endTime: z.string().min(1, "종료 시간을 입력해주세요."),
 });
 
 interface SaleRegistrationDialogProps {
@@ -93,6 +95,8 @@ export function SaleRegistrationDialog({
       totalPrice: 0,
       therapists: [{ employeeId: "", isChoice: false }],
       createdAt: defaultDate,
+      startTime: format(new Date(), "HH:mm"),
+      endTime: "",
     },
   });
 
@@ -112,11 +116,25 @@ export function SaleRegistrationDialog({
     control: form.control,
     name: "therapists",
   });
+  const watchStartTime = useWatch({
+    control: form.control,
+    name: "startTime",
+  });
+
   useEffect(() => {
     if (watchCourseId) {
       const selectedCourse = courses.find((c) => c.id === watchCourseId);
       if (selectedCourse) {
         form.setValue("totalPrice", selectedCourse.price);
+
+        // 종료 시간 자동 계산
+        if (watchStartTime) {
+          const [hours, minutes] = watchStartTime.split(":").map(Number);
+          const start = new Date();
+          start.setHours(hours, minutes, 0, 0);
+          const end = new Date(start.getTime() + selectedCourse.duration * 60000);
+          form.setValue("endTime", format(end, "HH:mm"));
+        }
 
         // 2인 코스면 관리사 슬롯 2개로 확장, 1인 코스면 1개로 축소
         if (selectedCourse.type === "DOUBLE") {
@@ -132,11 +150,32 @@ export function SaleRegistrationDialog({
         }
       }
     }
-  }, [watchCourseId, courses, form]);
+  }, [watchCourseId, watchStartTime, courses, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    const result = await createSale(values);
+
+    // 날짜와 시간을 합쳐서 Date 객체 생성
+    const combineDateTime = (date: Date, timeStr: string) => {
+      const [hours, minutes] = timeStr.split(":").map(Number);
+      const newDate = new Date(date);
+      newDate.setHours(hours, minutes, 0, 0);
+      return newDate;
+    };
+
+    const startTime = combineDateTime(values.createdAt, values.startTime);
+    const endTime = combineDateTime(values.createdAt, values.endTime);
+
+    // 종료 시간이 시작 시간보다 빠르면 (자정을 넘긴 경우) 다음날로 설정
+    if (endTime < startTime) {
+      endTime.setDate(endTime.getDate() + 1);
+    }
+
+    const result = await createSale({
+      ...values,
+      startTime,
+      endTime,
+    });
     setIsLoading(false);
 
     if (result.success) {
@@ -217,6 +256,50 @@ export function SaleRegistrationDialog({
                     </FormItem>
                   )}
                 />
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* 시작 시간 */}
+                  <FormField
+                    control={form.control}
+                    name="startTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-zinc-700 dark:text-zinc-300">
+                          시작 시간
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="time"
+                            className="h-12 rounded-xl border-zinc-200 dark:border-zinc-800 font-bold focus-visible:ring-emerald-500"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* 종료 시간 */}
+                  <FormField
+                    control={form.control}
+                    name="endTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-zinc-700 dark:text-zinc-300">
+                          종료 시간
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="time"
+                            className="h-12 rounded-xl border-zinc-200 dark:border-zinc-800 font-bold focus-visible:ring-emerald-500"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 {/* 코스 선택 */}
                 <FormField

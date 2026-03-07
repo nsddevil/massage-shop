@@ -1,4 +1,4 @@
-import { PayMethod, CourseType } from "@/generated/prisma/enums";
+import { PayMethod, CourseType } from "@/generated/prisma";
 
 export type { PayMethod };
 
@@ -21,6 +21,8 @@ export interface CreateSaleInput {
   totalPrice: number;
   therapists: SaleTherapistInput[];
   createdAt?: Date;
+  startTime?: Date;
+  endTime?: Date;
 }
 
 export interface UpdateSaleInput extends CreateSaleInput {
@@ -38,6 +40,8 @@ export interface SaleWithDetails {
   };
   payMethod: PayMethod;
   totalPrice: number;
+  startTime: Date | null;
+  endTime: Date | null;
   therapists: {
     id: string;
     employeeId: string;

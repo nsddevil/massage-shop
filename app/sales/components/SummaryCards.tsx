@@ -85,7 +85,7 @@ export function SummaryCards({ summary }: SummaryCardsProps) {
                   {PAY_METHOD_LABELS[method]}
                 </p>
                 <div className="text-lg font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
-                  ₩{(summary[method] || 0).toLocaleString()}
+                  ₩{(summary[method as keyof DailySummary] || 0).toLocaleString()}
                 </div>
               </div>
             </CardContent>

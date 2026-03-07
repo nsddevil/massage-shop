@@ -20,6 +20,8 @@ export async function createCourse(
         type: data.type,
         duration: data.duration,
         price: data.price,
+        commissionSingle: data.commissionSingle,
+        commissionDouble: data.commissionDouble,
         isActive: true,
       },
     });

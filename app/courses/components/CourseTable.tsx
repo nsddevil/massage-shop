@@ -211,13 +211,22 @@ export function CourseTable({ courses }: CourseTableProps) {
                       {COURSE_TYPE_LABELS[course.type]}
                     </div>
                   </div>
-                  <div className="col-span-2 space-y-1">
+                  <div className="col-span-1 space-y-1">
                     <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">
                       코스 금액
                     </span>
-                    <div className="text-zinc-900 dark:text-zinc-100 font-black text-lg flex items-center gap-1.5">
-                      <Wallet className="size-4 text-blue-600" />₩
-                      {course.price.toLocaleString()}
+                    <div className="text-zinc-900 dark:text-zinc-100 font-black text-base flex items-center gap-1.5">
+                      ₩{course.price.toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="col-span-1 space-y-1 border-l border-zinc-100 dark:border-zinc-800 pl-4">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tighter">
+                      기본 커미션
+                    </span>
+                    <div className="text-blue-600 dark:text-blue-400 font-bold text-sm">
+                      {course.type === "SINGLE"
+                        ? `₩${course.commissionSingle.toLocaleString()}`
+                        : `₩${course.commissionDouble.toLocaleString()} (인당)`}
                     </div>
                   </div>
                 </div>
@@ -243,8 +252,11 @@ export function CourseTable({ courses }: CourseTableProps) {
                   <TableHead className="font-bold text-zinc-400 uppercase text-[10px] tracking-wider">
                     소요 시간
                   </TableHead>
-                  <TableHead className="font-bold text-zinc-400 uppercase text-[10px] tracking-wider">
+                   <TableHead className="font-bold text-zinc-400 uppercase text-[10px] tracking-wider">
                     금액 (원)
+                  </TableHead>
+                  <TableHead className="font-bold text-zinc-400 uppercase text-[10px] tracking-wider">
+                    커미션 (1인/2인)
                   </TableHead>
                   <TableHead className="font-bold text-zinc-400 uppercase text-[10px] tracking-wider">
                     상태
@@ -294,6 +306,18 @@ export function CourseTable({ courses }: CourseTableProps) {
                       <div className="flex items-center gap-1.5 font-bold text-zinc-700 dark:text-zinc-300">
                         <Wallet className="size-3.5 text-zinc-300" />₩
                         {course.price.toLocaleString()}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-0.5 text-xs">
+                        <div className="flex items-center gap-1.5 font-bold text-blue-600 dark:text-blue-400">
+                          <span className="text-[9px] text-zinc-400">1인:</span>
+                          ₩{course.commissionSingle.toLocaleString()}
+                        </div>
+                        <div className="flex items-center gap-1.5 font-bold text-purple-600 dark:text-purple-400">
+                          <span className="text-[9px] text-zinc-400">2인:</span>
+                          ₩{course.commissionDouble.toLocaleString()} (인당)
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
